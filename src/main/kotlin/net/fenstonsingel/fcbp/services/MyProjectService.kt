@@ -1,7 +1,7 @@
 package net.fenstonsingel.fcbp.services
 
-import net.fenstonsingel.fcbp.MyBundle
 import com.intellij.openapi.project.Project
+import net.fenstonsingel.fcbp.MyBundle
 
 class MyProjectService(project: Project) {
 

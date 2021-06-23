@@ -1,9 +1,9 @@
 package net.fenstonsingel.fcbp.listeners
 
-import net.fenstonsingel.fcbp.services.MyProjectService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
+import net.fenstonsingel.fcbp.services.MyProjectService
 
 internal class MyProjectManagerListener : ProjectManagerListener {
 
