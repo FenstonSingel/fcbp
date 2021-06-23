@@ -1,10 +1,11 @@
-package com.github.fenstonsingel.fcbp.services
+package net.fenstonsingel.fcbp.services
 
-import com.github.fenstonsingel.fcbp.MyBundle
+import net.fenstonsingel.fcbp.MyBundle
 
 class MyApplicationService {
 
     init {
         println(MyBundle.message("applicationService"))
     }
+
 }

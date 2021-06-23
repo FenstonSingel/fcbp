@@ -1,4 +1,4 @@
-package com.github.fenstonsingel.fcbp
+package net.fenstonsingel.fcbp
 
 import com.intellij.AbstractBundle
 import org.jetbrains.annotations.NonNls

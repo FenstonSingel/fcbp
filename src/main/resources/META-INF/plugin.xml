@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>com.github.fenstonsingel.fcbp</id>
+    <id>net.fenstonsingel.fcbp</id>
     <name>fcbp</name>
     <vendor>fenstonsingel</vendor>
 
@@ -8,12 +8,12 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="com.github.fenstonsingel.fcbp.services.MyApplicationService"/>
-        <projectService serviceImplementation="com.github.fenstonsingel.fcbp.services.MyProjectService"/>
+        <applicationService serviceImplementation="net.fenstonsingel.fcbp.services.MyApplicationService"/>
+        <projectService serviceImplementation="net.fenstonsingel.fcbp.services.MyProjectService"/>
     </extensions>
 
     <applicationListeners>
-        <listener class="com.github.fenstonsingel.fcbp.listeners.MyProjectManagerListener"
+        <listener class="net.fenstonsingel.fcbp.listeners.MyProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
 </idea-plugin>

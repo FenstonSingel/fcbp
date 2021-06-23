@@ -1,6 +1,6 @@
-package com.github.fenstonsingel.fcbp.listeners
+package net.fenstonsingel.fcbp.listeners
 
-import com.github.fenstonsingel.fcbp.services.MyProjectService
+import net.fenstonsingel.fcbp.services.MyProjectService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
@@ -10,4 +10,5 @@ internal class MyProjectManagerListener : ProjectManagerListener {
     override fun projectOpened(project: Project) {
         project.service<MyProjectService>()
     }
+
 }
