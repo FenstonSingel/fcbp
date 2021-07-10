@@ -9,12 +9,11 @@
     <depends>com.intellij.modules.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="net.fenstonsingel.fcbp.services.MyApplicationService"/>
-        <projectService serviceImplementation="net.fenstonsingel.fcbp.services.MyProjectService"/>
+        <postStartupActivity implementation="net.fenstonsingel.fcbp.extensions.FCBPStartupActivity"/>
     </extensions>
 
-    <applicationListeners>
-        <listener class="net.fenstonsingel.fcbp.listeners.MyProjectManagerListener"
-                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
-    </applicationListeners>
+    <projectListeners>
+        <listener class="net.fenstonsingel.fcbp.listeners.FCBPXBreakpointListener"
+                  topic="com.intellij.xdebugger.breakpoints.XBreakpointListener"/>
+    </projectListeners>
 </idea-plugin>
