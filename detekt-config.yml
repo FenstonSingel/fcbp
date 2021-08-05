@@ -9,3 +9,6 @@ formatting:
   NoBlankLineBeforeRbrace:
     active: false
     autoCorrect: false
+style:
+  ReturnCount:
+    max: 5
