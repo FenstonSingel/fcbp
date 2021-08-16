@@ -1,4 +1,3 @@
-import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -8,7 +7,7 @@ plugins {
     // Java support
     id("java")
     // Kotlin support
-    id("org.jetbrains.kotlin.jvm") version "1.4.32"
+    id("org.jetbrains.kotlin.jvm") version "1.5.10"
     // gradle-intellij-plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
     id("org.jetbrains.intellij") version "1.0"
     // gradle-changelog-plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
@@ -27,6 +26,7 @@ repositories {
     mavenCentral()
 }
 dependencies {
+    runtimeOnly(project(path = ":fcbp-instrumenter", configuration = "default"))
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.17.1")
 }
 
@@ -71,10 +71,6 @@ tasks {
     }
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
-    }
-
-    withType<Detekt> {
-        jvmTarget = "1.8"
     }
 
     patchPluginXml {
