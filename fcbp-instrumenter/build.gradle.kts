@@ -3,10 +3,11 @@ plugins {
     id("org.jetbrains.kotlin.jvm")
     id("io.gitlab.arturbosch.detekt")
     id("org.jlleitschuh.gradle.ktlint")
+    id("com.github.johnrengelman.shadow") version "7.0.0"
 }
 
-group = parent!!.group
-version = parent!!.version
+group = parent?.group ?: "net.fenstonsingel.fcbp"
+version = parent?.version ?: "inapplicable"
 
 /*
  * this is (seemingly) a weird hack to basically exclude
@@ -28,12 +29,10 @@ repositories {
     mavenCentral()
 }
 dependencies {
-    javaagentImplementation(kotlin("stdlib"))
-    javaagentImplementation(files("libs/fs-asm-9.2.jar"))
-    javaagentImplementation(files("libs/fs-asm-commons-9.2.jar"))
-    javaagentImplementation(files("libs/fs-asm-tree-9.2.jar"))
-    javaagentImplementation(files("libs/fs-asm-analysis-9.2.jar"))
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.17.1")
+    javaagentImplementation("org.jetbrains.kotlin:kotlin-stdlib:1.5.21")
+    javaagentImplementation("org.ow2.asm:asm:9.2")
+    javaagentImplementation("org.ow2.asm:asm-commons:9.2")
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.18.1")
 }
 
 detekt {
@@ -50,12 +49,10 @@ detekt {
 tasks.jar {
     manifest {
         attributes["Premain-Class"] = "net.fenstonsingel.fcbp.instrumenter.PremainClass"
+        attributes["Can-Retransform-Classes"] = "true"
     }
-    val sourcePaths = javaagentImplementation.map { classpathFile ->
-        if (classpathFile.isDirectory)
-            classpathFile
-        else
-            zipTree(classpathFile).matching { exclude("**/module-info.class") }
-    }
-    from(sourcePaths)
+}
+
+tasks.shadowJar {
+    relocate("org.objectweb.asm", "net.fenstonsingel.fcbp.asm")
 }

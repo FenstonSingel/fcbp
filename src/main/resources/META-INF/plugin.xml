@@ -9,10 +9,13 @@
     <depends>com.intellij.modules.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <debugger.positionManagerFactory implementation="net.fenstonsingel.fcbp.extensions.FCBPPositionManagerFactory"/>
         <postStartupActivity implementation="net.fenstonsingel.fcbp.extensions.FCBPStartupActivity"/>
     </extensions>
 
     <projectListeners>
+        <listener class="net.fenstonsingel.fcbp.listeners.FCBPDebuggerManagerListener"
+                  topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
         <listener class="net.fenstonsingel.fcbp.listeners.FCBPXBreakpointListener"
                   topic="com.intellij.xdebugger.breakpoints.XBreakpointListener"/>
     </projectListeners>

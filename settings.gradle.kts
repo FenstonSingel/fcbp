@@ -1,2 +1,4 @@
 rootProject.name = "fcbp"
-include(":fcbp-instrumenter")
+
+include(":instrumenter")
+project(":instrumenter").projectDir = File("fcbp-instrumenter")

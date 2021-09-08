@@ -3,12 +3,14 @@
 
 formatting:
   Indentation:
-    continuationIndentSize: 8
+    continuationIndentSize: 4
   ParameterListWrapping:
-    indentSize: 8
+    indentSize: 4
   NoBlankLineBeforeRbrace:
     active: false
     autoCorrect: false
 style:
   ReturnCount:
     max: 5
+  UnusedPrivateMember:
+    allowedNames: premainArguments
