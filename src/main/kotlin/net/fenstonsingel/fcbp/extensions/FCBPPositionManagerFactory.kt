@@ -30,9 +30,10 @@ class FCBPPositionManagerFactory : PositionManagerFactory() {
             // TODO figure out if the condition was already evaluated by virtue of being instrumented into code
             //      in other words, look up given info in the set of all instrumented breakpoints
             //      to see if it's one of them
+            return ThreeState.YES
 
-            // the condition in question wasn't instrumented, let other evaluators decide whether it's true
-            return ThreeState.UNSURE
+//            // the condition in question wasn't instrumented, let other evaluators decide whether it's true
+//            return ThreeState.UNSURE
         }
 
         /*

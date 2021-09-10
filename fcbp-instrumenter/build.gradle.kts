@@ -32,6 +32,7 @@ dependencies {
     javaagentImplementation("org.jetbrains.kotlin:kotlin-stdlib:1.5.21")
     javaagentImplementation("org.ow2.asm:asm:9.2")
     javaagentImplementation("org.ow2.asm:asm-commons:9.2")
+    javaagentImplementation("org.ow2.asm:asm-util:9.2")
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.18.1")
 }
 
@@ -55,4 +56,8 @@ tasks.jar {
 
 tasks.shadowJar {
     relocate("org.objectweb.asm", "net.fenstonsingel.fcbp.asm")
+}
+
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt> {
+    onlyIf { project.hasProperty("runDetekt") }
 }

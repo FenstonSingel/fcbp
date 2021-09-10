@@ -1,40 +1,36 @@
 package net.fenstonsingel.fcbp.instrumenter
 
+import net.fenstonsingel.fcbp.instrumenter.compiler.LocalVariable
+import org.objectweb.asm.ClassReader
+import org.objectweb.asm.ClassWriter
 import java.lang.instrument.ClassFileTransformer
 import java.security.ProtectionDomain
 
-object FCBPTransformer : ClassFileTransformer {
+class FCBPTransformer(private val instrumenterManager: FCBPInstrumenterManager) : ClassFileTransformer {
 
     override fun transform(
         loader: ClassLoader?,
-        className: String?,
+        className: String,
         classBeingRedefined: Class<*>?,
-        protectionDomain: ProtectionDomain?,
-        classfileBuffer: ByteArray?
+        protectionDomain: ProtectionDomain,
+        classfileBuffer: ByteArray
     ): ByteArray? {
-        return if (classBeingRedefined == null)
-            transform(loader, className, protectionDomain, classfileBuffer)
-        else
-            retransform(loader, className, classBeingRedefined, protectionDomain, classfileBuffer)
-    }
+        val breakpointConditions = instrumenterManager.conditionsByClassName[className] ?: return null
 
-    private fun transform(
-        loader: ClassLoader?,
-        className: String?,
-        protectionDomain: ProtectionDomain?,
-        classfileBuffer: ByteArray?
-    ): ByteArray? {
-        TODO()
-    }
+        val classfileCopy = classfileBuffer.copyOf()
 
-    private fun retransform(
-        loader: ClassLoader?,
-        className: String?,
-        classBeingRedefined: Class<*>,
-        protectionDomain: ProtectionDomain?,
-        classfileBuffer: ByteArray?
-    ): ByteArray? {
-        TODO()
+        val lvcClassReader = ClassReader(classfileCopy)
+        val lvcClassWriter = ClassWriter(lvcClassReader, ClassWriter.COMPUTE_FRAMES)
+        val localVariablesCollector = LocalVariable.Collector(lvcClassWriter)
+        lvcClassReader.accept(localVariablesCollector, 0)
+        val allLocalVariables = localVariablesCollector.result
+
+        val classReader = ClassReader(classfileCopy)
+        val classWriter = ClassWriter(classReader, ClassWriter.COMPUTE_FRAMES)
+        val instrumenter = BreakpointConditionInstrumenter(classWriter, breakpointConditions, allLocalVariables)
+        classReader.accept(instrumenter, ClassReader.EXPAND_FRAMES)
+
+        return classWriter.toByteArray()
     }
 
 }
