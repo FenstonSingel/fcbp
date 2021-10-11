@@ -1,30 +1,27 @@
-import org.jetbrains.changelog.markdownToHTML
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 fun properties(key: String) = project.findProperty(key).toString()
 
 plugins {
-    // Java support
     id("java")
-    // Kotlin support
-    id("org.jetbrains.kotlin.jvm") version "1.5.21"
+    id("org.jetbrains.kotlin.jvm")
+
     // gradle-intellij-plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
     id("org.jetbrains.intellij") version "1.0"
     // gradle-changelog-plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
     id("org.jetbrains.changelog") version "1.1.2"
+
     // detekt linter - read more: https://detekt.github.io/detekt/gradle.html
-    id("io.gitlab.arturbosch.detekt") version "1.18.1"
+    id("io.gitlab.arturbosch.detekt")
     // ktlint linter - read more: https://github.com/JLLeitschuh/ktlint-gradle
-    id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
+    id("org.jlleitschuh.gradle.ktlint")
 }
 
 group = properties("pluginGroup")
 version = properties("pluginVersion")
 
-// Configure project's dependencies
 repositories {
     mavenCentral()
 }
+
 dependencies {
     runtimeOnly(project(path = ":instrumenter", configuration = "shadow"))
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.18.1")
@@ -69,7 +66,7 @@ tasks {
         sourceCompatibility = "1.8"
         targetCompatibility = "1.8"
     }
-    withType<KotlinCompile> {
+    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
     }
 
@@ -88,7 +85,7 @@ tasks {
                     throw GradleException("Plugin description section not found in README.md:\n$start ... $end")
                 }
                 subList(indexOf(start) + 1, indexOf(end))
-            }.joinToString("\n").run { markdownToHTML(this) }
+            }.joinToString("\n").run { org.jetbrains.changelog.markdownToHTML(this) }
         )
 
         // Get the latest available change notes from the changelog file
@@ -103,8 +100,12 @@ tasks {
         dependsOn("patchChangelog")
         token.set(System.getenv("PUBLISH_TOKEN"))
         // pluginVersion is based on the SemVer (https://semver.org) and supports pre-release labels, like 2.1.7-alpha.3
-        // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:
-        // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
+        // Specify pre-release label to publish the plugin in a custom Release Channel automatically.
+        // Read more: https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
         channels.set(listOf(properties("pluginVersion").split('-').getOrElse(1) { "default" }.split('.').first()))
+    }
+
+    withType<io.gitlab.arturbosch.detekt.Detekt> {
+        onlyIf { !project.hasProperty("ignoreDetekt") }
     }
 }

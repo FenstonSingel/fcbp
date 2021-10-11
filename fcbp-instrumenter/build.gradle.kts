@@ -1,9 +1,11 @@
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm")
+
+    id("com.github.johnrengelman.shadow") version "7.0.0"
+
     id("io.gitlab.arturbosch.detekt")
     id("org.jlleitschuh.gradle.ktlint")
-    id("com.github.johnrengelman.shadow") version "7.0.0"
 }
 
 group = parent?.group ?: "net.fenstonsingel.fcbp"
@@ -18,16 +20,13 @@ version = parent?.version ?: "inapplicable"
  * scan the "runtimeClasspath" configuration
  */
 val javaagentImplementation: Configuration by configurations.creating
-configurations.compileClasspath.configure {
-    extendsFrom(javaagentImplementation)
-}
-configurations.runtimeClasspath.configure {
-    extendsFrom(javaagentImplementation)
-}
+configurations.compileClasspath.configure { extendsFrom(javaagentImplementation) }
+configurations.runtimeClasspath.configure { extendsFrom(javaagentImplementation) }
 
 repositories {
     mavenCentral()
 }
+
 dependencies {
     javaagentImplementation("org.jetbrains.kotlin:kotlin-stdlib:1.5.21")
     javaagentImplementation("org.ow2.asm:asm:9.2")
@@ -47,17 +46,27 @@ detekt {
     }
 }
 
-tasks.jar {
-    manifest {
-        attributes["Premain-Class"] = "net.fenstonsingel.fcbp.instrumenter.PremainClass"
-        attributes["Can-Retransform-Classes"] = "true"
+tasks {
+    withType<JavaCompile> {
+        sourceCompatibility = "1.8"
+        targetCompatibility = "1.8"
     }
-}
+    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+        kotlinOptions.jvmTarget = "1.8"
+    }
 
-tasks.shadowJar {
-    relocate("org.objectweb.asm", "net.fenstonsingel.fcbp.asm")
-}
+    jar {
+        manifest {
+            attributes["Premain-Class"] = "net.fenstonsingel.fcbp.instrumenter.PremainClass"
+            attributes["Can-Retransform-Classes"] = "true"
+        }
+    }
 
-tasks.withType<io.gitlab.arturbosch.detekt.Detekt> {
-    onlyIf { project.hasProperty("runDetekt") }
+    shadowJar {
+        relocate("org.objectweb.asm", "net.fenstonsingel.fcbp.asm")
+    }
+
+    withType<io.gitlab.arturbosch.detekt.Detekt> {
+        onlyIf { !project.hasProperty("ignoreDetekt") }
+    }
 }
