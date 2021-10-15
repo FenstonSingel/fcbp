@@ -1,8 +1,8 @@
 plugins {
-    id("java")
-    id("org.jetbrains.kotlin.jvm")
+    java
+    kotlin("jvm")
 
-    id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("com.github.johnrengelman.shadow") version "7.1.0"
 
     id("io.gitlab.arturbosch.detekt")
     id("org.jlleitschuh.gradle.ktlint")
@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    javaagentImplementation("org.jetbrains.kotlin:kotlin-stdlib:1.5.21")
+    javaagentImplementation("org.jetbrains.kotlin:kotlin-stdlib:1.5.31")
     javaagentImplementation("org.ow2.asm:asm:9.2")
     javaagentImplementation("org.ow2.asm:asm-commons:9.2")
     javaagentImplementation("org.ow2.asm:asm-util:9.2")
@@ -54,6 +54,9 @@ tasks {
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
     }
+    withType<io.gitlab.arturbosch.detekt.Detekt> {
+        onlyIf { !project.hasProperty("ignoreDetekt") }
+    }
 
     jar {
         manifest {
@@ -64,9 +67,5 @@ tasks {
 
     shadowJar {
         relocate("org.objectweb.asm", "net.fenstonsingel.fcbp.asm")
-    }
-
-    withType<io.gitlab.arturbosch.detekt.Detekt> {
-        onlyIf { !project.hasProperty("ignoreDetekt") }
     }
 }

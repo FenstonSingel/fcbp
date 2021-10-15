@@ -4,6 +4,12 @@ plugins {
 
 group = "net.fenstonsingel.fcbp"
 
+repositories {
+    mavenCentral()
+}
+
+dependencies {}
+
 tasks {
     withType<JavaCompile> {
         sourceCompatibility = "1.8"

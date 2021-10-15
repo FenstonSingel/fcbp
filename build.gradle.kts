@@ -1,18 +1,18 @@
 fun properties(key: String) = project.findProperty(key).toString()
 
 plugins {
-    id("java")
-    id("org.jetbrains.kotlin.jvm")
+    java
+    kotlin("jvm") version "1.5.31"
 
     // gradle-intellij-plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
-    id("org.jetbrains.intellij") version "1.0"
+    id("org.jetbrains.intellij") version "1.2.0"
     // gradle-changelog-plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
-    id("org.jetbrains.changelog") version "1.1.2"
+    id("org.jetbrains.changelog") version "1.3.1"
 
     // detekt linter - read more: https://detekt.github.io/detekt/gradle.html
-    id("io.gitlab.arturbosch.detekt")
+    id("io.gitlab.arturbosch.detekt") version "1.18.1"
     // ktlint linter - read more: https://github.com/JLLeitschuh/ktlint-gradle
-    id("org.jlleitschuh.gradle.ktlint")
+    id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
 }
 
 group = properties("pluginGroup")
@@ -43,8 +43,8 @@ intellij {
 // Configure gradle-changelog-plugin plugin.
 // Read more: https://github.com/JetBrains/gradle-changelog-plugin
 changelog {
-    version = properties("pluginVersion")
-    groups = emptyList()
+    version.set(properties("pluginVersion"))
+    groups.set(emptyList())
 }
 
 // Configure detekt plugin.
@@ -68,6 +68,9 @@ tasks {
     }
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
+    }
+    withType<io.gitlab.arturbosch.detekt.Detekt> {
+        onlyIf { !project.hasProperty("ignoreDetekt") }
     }
 
     patchPluginXml {
@@ -103,9 +106,5 @@ tasks {
         // Specify pre-release label to publish the plugin in a custom Release Channel automatically.
         // Read more: https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
         channels.set(listOf(properties("pluginVersion").split('-').getOrElse(1) { "default" }.split('.').first()))
-    }
-
-    withType<io.gitlab.arturbosch.detekt.Detekt> {
-        onlyIf { !project.hasProperty("ignoreDetekt") }
     }
 }
