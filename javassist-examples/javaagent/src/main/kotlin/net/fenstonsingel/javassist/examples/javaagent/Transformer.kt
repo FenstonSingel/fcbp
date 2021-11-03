@@ -55,9 +55,7 @@ internal object Transformer : ClassFileTransformer {
             val method11 = klass.getDeclaredMethod("example11")
             method11.insertAt(44, "System.out.printf(\"Hello from example11 w/ (%s: %d)!\\n\", new Object[] { net.fenstonsingel.javassist.examples.outside.OutsideEnumClass.A.name(), new Integer(net.fenstonsingel.javassist.examples.outside.OutsideEnumClass.A.fooi()) });")
 
-            // inoperable: javassist cannot compile declarations of anonymous classes (lambdas also don't work)
-//            val method12 = klass.getDeclaredMethod("example12")
-//            method12.insertAt(47, "")
+            // note to self: javassist cannot compile declarations of anonymous classes (lambdas also don't work)
         } catch (e: Exception) {
             e.printStackTrace()
             throw e

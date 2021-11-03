@@ -84,15 +84,4 @@ public class JavassistExamples {
         System.out.printf("Hello from example9 w/ %d from OutsideClass object!\n", oc.foo());
     }
 
-//    private static void bazv(java.util.function.Function<Integer, Integer> func) {
-//        System.out.printf("Hello from example12 w/ %d from a lambda!\n", func.apply(2));
-//    }
-
-//    private int bari = 24;
-//
-//    public class B {
-//        public int barint = bari;
-//        public int barfunc() { return barint * 2; }
-//    }
-
 }
