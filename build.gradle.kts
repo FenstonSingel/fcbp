@@ -5,7 +5,7 @@ plugins {
     kotlin("jvm") version "1.5.31"
 
     // gradle-intellij-plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
-    id("org.jetbrains.intellij") version "1.1.6"
+    id("org.jetbrains.intellij") version "1.2.2"
     // gradle-changelog-plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
     id("org.jetbrains.changelog") version "1.3.1"
 
@@ -61,13 +61,13 @@ detekt {
 }
 
 tasks {
-    // Set the compatibility versions to 1.8
+    // Set the compatibility versions to 11
     withType<JavaCompile> {
-        sourceCompatibility = "1.8"
-        targetCompatibility = "1.8"
+        sourceCompatibility = "11"
+        targetCompatibility = "11"
     }
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = "1.8"
+        kotlinOptions.jvmTarget = "11"
     }
     withType<io.gitlab.arturbosch.detekt.Detekt> {
         onlyIf { !project.hasProperty("ignoreDetekt") }
