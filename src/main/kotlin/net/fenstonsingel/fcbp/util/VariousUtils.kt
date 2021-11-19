@@ -15,6 +15,9 @@ import com.intellij.util.containers.JBIterable
 
 /**
  * A PSI element representing the breakpoint's condition.
+ * Is null when the breakpoint doesn't have a condition.
+ *
+ * TODO check the invocation case when context == null
  */
 val Breakpoint<*>.conditionPsi: JavaCodeFragment? get() {
     val context = evaluationElement
@@ -25,7 +28,7 @@ val Breakpoint<*>.conditionPsi: JavaCodeFragment? get() {
 }
 
 /**
- * All classes that are available to reference from this code point, including outer ones.
+ * All classes that are available for referencing from this code point, including outer ones.
  */
 val PsiElement.allEnclosingClasses: List<PsiClass> get() = JBIterable
     .generate(this) { psi -> psi.parent }
@@ -39,9 +42,13 @@ val PsiElement.allEnclosingClasses: List<PsiClass> get() = JBIterable
  */
 val PsiElement.enclosingClass: PsiClass? get() = allEnclosingClasses.firstOrNull()
 
+/**
+ * For any PSI reference "X", given PSI reference "Y", substitutes "Y.X" for "X".
+ */
 fun PsiJavaCodeReferenceElement.addQualifier(qualifier: PsiJavaCodeReferenceElement) {
     val psiFactory = JavaPsiFacade.getElementFactory(project)
     val template = psiFactory.createExpressionFromText("x.y", null)
+
     /*
      * per documentation, all PSI transformations must occur as write actions
      * thankfully, it doesn't seem to propagate to the original data set by the user
@@ -53,8 +60,31 @@ fun PsiJavaCodeReferenceElement.addQualifier(qualifier: PsiJavaCodeReferenceElem
     }
 }
 
+/**
+ * For any PSI reference "X", given a qualifier "Y" as a string, substitutes "Y.X" for "X".
+ */
 fun PsiJavaCodeReferenceElement.addQualifier(qualifier: String) {
     val psiFactory = JavaPsiFacade.getElementFactory(project)
     val qualifierPsi = psiFactory.createExpressionFromText(qualifier, null) as PsiJavaCodeReferenceElement
     addQualifier(qualifierPsi)
+}
+
+/**
+ * Returns a given number of strings, each of which doesn't appear in a provided set of non-fresh identifiers.
+ * Returned strings follow alphabetical order in lowercase
+ * ("a", "b", ... "z", "aa", ..., "az", "ba", ..., "zz", "aaa", ...).
+ */
+fun generateFreshIdentifiers(number: Int, nonFreshIdentifiers: Set<String> = emptySet()): Set<String> {
+    return stringsInAlphabeticalOrder.filter { candidate -> candidate !in nonFreshIdentifiers }.take(number).toSet()
+}
+
+/**
+ * A freshly generated sequence of strings that follow the pattern of alphabetical order in lowercase
+ * ("a", "b", ... "z", "aa", ..., "az", "ba", ..., "zz", "aaa", ...).
+ */
+val stringsInAlphabeticalOrder: Sequence<String> get() = generateSequence("a") { str ->
+    val zsIndex = str.indexOfLast { c -> c != 'z' } + 1
+    val oldPrefix = str.substring(0, zsIndex)
+    val newPrefix = if (oldPrefix.isEmpty()) "a" else "${oldPrefix.dropLast(1)}${oldPrefix.last() + 1}"
+    "$newPrefix${"a".repeat(str.length - zsIndex)}"
 }
