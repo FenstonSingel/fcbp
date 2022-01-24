@@ -32,7 +32,8 @@ dependencies {
     javaagentImplementation("org.ow2.asm:asm:9.2")
     javaagentImplementation("org.ow2.asm:asm-commons:9.2")
     javaagentImplementation("org.ow2.asm:asm-util:9.2")
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.18.1")
+    javaagentImplementation("org.javassist:javassist:3.28.0-GA")
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.19.0")
 }
 
 detekt {
