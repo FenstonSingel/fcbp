@@ -5,6 +5,8 @@ import com.intellij.openapi.startup.StartupActivity
 
 class FCBPStartupActivity : StartupActivity {
 
-    override fun runActivity(project: Project) = Unit
+    override fun runActivity(project: Project) {
+        // skip
+    }
 
 }

@@ -1,6 +1,6 @@
 package net.fenstonsingel.fcbp.instrumenter
 
-import net.fenstonsingel.fcbp.instrumenter.compiler.LocalVariable
+import javassist.ClassPool
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import java.lang.instrument.ClassFileTransformer
@@ -17,20 +17,15 @@ class FCBPTransformer(private val instrumenterManager: FCBPInstrumenterManager) 
     ): ByteArray? {
         val breakpointConditions = instrumenterManager.conditionsByClassName[className] ?: return null
 
-        val classfileCopy = classfileBuffer.copyOf()
-
-        val lvcClassReader = ClassReader(classfileCopy)
-        val lvcClassWriter = ClassWriter(lvcClassReader, ClassWriter.COMPUTE_FRAMES)
-        val localVariablesCollector = LocalVariable.Collector(lvcClassWriter)
-        lvcClassReader.accept(localVariablesCollector, 0)
-        val allLocalVariables = localVariablesCollector.result
-
-        val classReader = ClassReader(classfileCopy)
+        val classReader = ClassReader(classfileBuffer.copyOf())
         val classWriter = ClassWriter(classReader, ClassWriter.COMPUTE_FRAMES)
-        val instrumenter = BreakpointConditionInstrumenter(classWriter, breakpointConditions, allLocalVariables)
+        val instrumenter = BreakpointConditionInstrumenter(classWriter, breakpointConditions)
         classReader.accept(instrumenter, ClassReader.EXPAND_FRAMES)
 
-        return classWriter.toByteArray()
+        val ctClass = ClassPool.getDefault().makeClass(classWriter.toByteArray().inputStream())
+        // TODO actually compile all conditions
+
+        return ctClass.toBytecode()
     }
 
 }

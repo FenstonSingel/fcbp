@@ -1,4 +1,4 @@
-package net.fenstonsingel.fcbp.util
+package net.fenstonsingel.fcbp.minimal
 
 import com.intellij.psi.JavaCodeFragment
 import com.intellij.psi.JavaRecursiveElementVisitor
@@ -7,35 +7,39 @@ import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.PsiQualifiedNamedElement
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.util.PsiUtil
-
-data class BreakpointConditionMethod(val body: String, val parameters: Set<BreakpointConditionMethodParameter>) {
-    companion object {
-        fun from(conditionPsi: JavaCodeFragment) = BreakpointConditionPsiProcessor(conditionPsi).process()
-    }
-}
+import net.fenstonsingel.fcbp.addQualifier
+import net.fenstonsingel.fcbp.allEnclosingClasses
+import net.fenstonsingel.fcbp.enclosingClass
+import net.fenstonsingel.fcbp.generateFreshIdentifiers
 
 data class BreakpointConditionMethodParameter(val typeFQN: String, val identifier: String)
 
-class BreakpointConditionPsiProcessor(private val condition: JavaCodeFragment) : JavaRecursiveElementVisitor() {
+data class BreakpointConditionMethod(val body: String, val parameters: Set<BreakpointConditionMethodParameter>) {
+    companion object {
+        fun from(conditionPsi: JavaCodeFragment) = BreakpointConditionPsiProcessor(conditionPsi).execute()
+    }
+}
 
-    fun process(): BreakpointConditionMethod {
+private class BreakpointConditionPsiProcessor(private val condition: JavaCodeFragment) : JavaRecursiveElementVisitor() {
+
+    fun execute(): BreakpointConditionMethod {
         condition.accept(this)
 
         // assigning fresh identifiers to all explicit "this" references to be added to avoid name collisions
-        val thisToExtract = thisReferencesToExtract.map { pair -> pair.first }.toSet()
-        val identifiersForThis = thisToExtract
-            .zip(generateFreshIdentifiers(thisToExtract.size, nonFreshIdentifiers))
+        val theseToExtract = thisReferencesToExtract.map { pair -> pair.first }.toSet()
+        val identifiersForThese = theseToExtract
+            .zip(generateFreshIdentifiers(theseToExtract.size, nonFreshIdentifiers))
             .toMap()
 
-        // registering all necessary parameters to forward targets of "this" references
-        for ((thisRefType, identifier) in identifiersForThis) {
+        // registering all necessary parameters to forward "this" references' targets
+        for ((thisRefType, identifier) in identifiersForThese) {
             extractedParameters += BreakpointConditionMethodParameter(thisRefType.fullyQualifiedName, identifier)
         }
 
         // marking implicit "this" references for qualifier addition to turn them into explicit references
         for ((thisRefType, referencePsi) in thisReferencesToExtract) {
-            val identifierForThis = identifiersForThis[thisRefType]
-                ?: throw IllegalStateException("an identifier wasn't generated for a \"this\" reference")
+            val identifierForThis = identifiersForThese[thisRefType]
+            checkNotNull(identifierForThis) { "an identifier wasn't generated for a \"this\" reference" }
             qualifiersToAdd += identifierForThis to referencePsi
         }
 
@@ -54,8 +58,8 @@ class BreakpointConditionPsiProcessor(private val condition: JavaCodeFragment) :
     }
 
     /*
-     * TODO extracting private members/methods
      * TODO extracting explicit "this" references
+     * TODO extracting private members/methods
      */
     override fun visitReferenceElement(reference: PsiJavaCodeReferenceElement) {
         super.visitReferenceElement(reference) // maintaining recursion
@@ -64,10 +68,10 @@ class BreakpointConditionPsiProcessor(private val condition: JavaCodeFragment) :
         if (reference.qualifier != null) return
 
         val target = reference.resolve()
-            ?: throw IllegalStateException("unresolved entity $reference found in a breakpoint condition $condition")
+        checkNotNull(target) { "unresolved entity $reference found in a breakpoint condition $condition" }
 
         val context = condition.context
-            ?: throw IllegalStateException("breakpoint condition has no execution context")
+        checkNotNull(context) { "breakpoint condition has no execution context" }
 
         when {
             PsiUtil.isJvmLocalVariable(target) -> { // extracting context method's local variables and parameters

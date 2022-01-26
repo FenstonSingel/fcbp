@@ -6,13 +6,15 @@ class FCBPInstrumenterManager(private val instrumentation: Instrumentation) : Ru
 
     val conditionsByClassName: Map<String, List<BreakpointCondition>> get() = mutableConditionsByClassName
 
+    val methodNamesByBytecodeLabel = mutableMapOf<BytecodeLabel, String>()
+
     override fun run() = executeSafely {
         check(instrumentation.isRetransformClassesSupported) { "Target JVM can't retransform classes." }
         instrumentation.addTransformer(transformer, true)
 
         addCondition(
-            "net.fennmata.Benchmark",
-            BreakpointCondition(71, null, "index == settings.loopLength")
+            "net.fenstonsingel.fcbp.testbed.Benchmark",
+            BreakpointCondition(71, null, "i % 7 == 0")
         )
     }
 

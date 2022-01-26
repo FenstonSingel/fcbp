@@ -1,4 +1,4 @@
-package net.fenstonsingel.fcbp.util
+package net.fenstonsingel.fcbp
 
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
@@ -15,13 +15,15 @@ import com.intellij.util.containers.JBIterable
 
 /**
  * A PSI element representing the breakpoint's condition.
+ *
  * Is null when the breakpoint doesn't have a condition.
  *
  * TODO check the invocation case when context == null
  */
 val Breakpoint<*>.conditionPsi: JavaCodeFragment? get() {
+    val condition = TextWithImportsImpl.fromXExpression(xBreakpoint.conditionExpression)
+        ?: return null
     val context = evaluationElement
-    val condition = TextWithImportsImpl.fromXExpression(xBreakpoint.conditionExpression) ?: return null
     return DebuggerUtilsEx
         .findAppropriateCodeFragmentFactory(condition, context)
         .createCodeFragment(condition, context, project)
