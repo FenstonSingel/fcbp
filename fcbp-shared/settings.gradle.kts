@@ -1,4 +1,4 @@
-rootProject.name = "fcbp-instrumenter"
+rootProject.name = "fcbp-shared"
 
 pluginManagement {
     plugins {
@@ -7,6 +7,3 @@ pluginManagement {
         id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
     }
 }
-
-include(":shared")
-project(":shared").projectDir = File("../fcbp-shared")

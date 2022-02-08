@@ -23,6 +23,7 @@ repositories {
 }
 
 dependencies {
+    implementation(project(path = ":shared"))
     runtimeOnly(project(path = ":instrumenter", configuration = "shadow"))
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.19.0")
 }

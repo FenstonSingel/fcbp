@@ -1,5 +1,4 @@
 plugins {
-    java
     kotlin("jvm")
 
     id("com.github.johnrengelman.shadow") version "7.1.0"
@@ -28,6 +27,7 @@ repositories {
 }
 
 dependencies {
+    javaagentImplementation(project(path = ":shared"))
     javaagentImplementation("org.jetbrains.kotlin:kotlin-stdlib:1.5.31")
     javaagentImplementation("org.ow2.asm:asm:9.2")
     javaagentImplementation("org.ow2.asm:asm-commons:9.2")
