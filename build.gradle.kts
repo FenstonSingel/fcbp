@@ -3,6 +3,7 @@ fun properties(key: String) = project.findProperty(key).toString()
 plugins {
     java
     kotlin("jvm") version "1.5.31"
+    kotlin("plugin.serialization") version "1.5.31"
 
     // gradle-intellij-plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
     id("org.jetbrains.intellij") version "1.2.1"
@@ -25,6 +26,7 @@ repositories {
 dependencies {
     implementation(project(path = ":shared"))
     runtimeOnly(project(path = ":instrumenter", configuration = "shadow"))
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.19.0")
 }
 
