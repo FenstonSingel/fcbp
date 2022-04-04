@@ -1,4 +1,4 @@
-package net.fenstonsingel.fcbp.minimal
+package net.fenstonsingel.fcbp.old
 
 import com.intellij.psi.JavaCodeFragment
 import com.intellij.psi.JavaRecursiveElementVisitor

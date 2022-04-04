@@ -6,11 +6,16 @@ import java.lang.instrument.Instrumentation
 object PremainClass {
 
     @JvmStatic
-    fun premain(premainArguments: String?, instrumentation: Instrumentation) {
+    fun premain(arguments: String?, instrumentation: Instrumentation) {
         if (hasPremainAlreadyBeenStarted) return
         hasPremainAlreadyBeenStarted = true
 
-        FCBPInstrumenterManager(instrumentation).run()
+        try {
+            val instrumenterID = checkNotNull(arguments?.toIntOrNull()) { "FCBP instrumenter ID wasn't provided" }
+            FCBPInstrumenter.launch(instrumenterID, instrumentation)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     // this is a godforsaken workaround motivated by

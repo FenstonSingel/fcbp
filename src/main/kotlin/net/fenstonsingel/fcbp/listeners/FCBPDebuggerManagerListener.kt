@@ -2,24 +2,25 @@ package net.fenstonsingel.fcbp.listeners
 
 import com.intellij.debugger.impl.DebuggerManagerListener
 import com.intellij.debugger.impl.DebuggerSession
+import net.fenstonsingel.fcbp.core.fcbpSession
+import net.fenstonsingel.fcbp.core.launchFCBPSession
 
 /**
- * A listener to manage start-up and shutdown of the FCBP server.
+ * Establishes an interrelation between debugger sessions and FCBP sessions
+ * by launching and invalidating FCBP sessions at appropriate moments
+ * of the debugger session's lifecycle.
  */
-object FCBPDebuggerManagerListener : DebuggerManagerListener {
+class FCBPDebuggerManagerListener : DebuggerManagerListener {
 
-    /**
-     * Starts the FCBP server for condition instrumenters to connect to.
-     */
-    override fun sessionCreated(session: DebuggerSession) {
-        // TODO see method description
+    /** Launches a corresponding FCBP session for a newly started debugger session. */
+    override fun sessionCreated(debuggerSession: DebuggerSession) {
+        // TODO do not bother with a FCBP session if there's no Java code to debug
+        debuggerSession.launchFCBPSession()
     }
 
-    /**
-     * Shutdowns the FCBP server.
-     */
-    override fun sessionRemoved(session: DebuggerSession) {
-        // TODO see method description
+    /** Invalidates the FCBP session (if there's any) of a concluded debugger session. */
+    override fun sessionRemoved(debuggerSession: DebuggerSession) {
+        debuggerSession.fcbpSession?.invalidate()
     }
 
 }

@@ -16,7 +16,6 @@ style:
   UnusedPrivateMember:
     allowedNames: premainArguments
 
-# TODO reevaluate these two rule deactivations
 exceptions:
   TooGenericExceptionCaught:
     active: false
