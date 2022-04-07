@@ -8,6 +8,7 @@ import com.sun.jdi.Location
 import net.fenstonsingel.fcbp.shared.FCBPBreakpoint
 import net.fenstonsingel.fcbp.shared.FCBPConditionAdded
 import net.fenstonsingel.fcbp.shared.FCBPInitializationCompleted
+import net.fenstonsingel.fcbp.shared.FCBPInitializationStarted
 import net.fenstonsingel.fcbp.shared.sendFCBPPacket
 import java.nio.channels.SocketChannel
 
@@ -32,6 +33,8 @@ class FCBPSession private constructor(val debuggerSession: DebuggerSession) {
             }
         }
         instrumenterChannel = socketChannel
+        val instrumenterLoggingDirectory: String? = debuggerSession.project.basePath?.let { "$it/build/fcbp" }
+        instrumenterChannel.sendFCBPPacket(FCBPInitializationStarted(instrumenterLoggingDirectory))
         fcbpBreakpointManager.breakpoints.forEach { breakpoint ->
             val breakpointAddedPacket = FCBPConditionAdded(breakpoint)
             instrumenterChannel.sendFCBPPacket(breakpointAddedPacket)

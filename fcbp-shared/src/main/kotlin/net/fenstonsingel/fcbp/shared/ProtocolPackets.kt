@@ -9,6 +9,9 @@ sealed class FCBPPacket
 data class FCBPInstrumenterConnected(val instrumenterID: Int, val isOperative: Boolean = true) : FCBPPacket()
 
 @Serializable
+data class FCBPInitializationStarted(val loggingDirectory: String?) : FCBPPacket()
+
+@Serializable
 object FCBPInitializationCompleted : FCBPPacket()
 
 @Serializable

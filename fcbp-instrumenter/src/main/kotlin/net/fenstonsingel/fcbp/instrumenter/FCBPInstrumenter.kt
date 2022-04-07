@@ -5,9 +5,11 @@ import net.fenstonsingel.fcbp.shared.FCBPConditionAdded
 import net.fenstonsingel.fcbp.shared.FCBPConditionDelegated
 import net.fenstonsingel.fcbp.shared.FCBPConditionInstrumented
 import net.fenstonsingel.fcbp.shared.FCBPInitializationCompleted
+import net.fenstonsingel.fcbp.shared.FCBPInitializationStarted
 import net.fenstonsingel.fcbp.shared.FCBPInstrumenterConnected
 import net.fenstonsingel.fcbp.shared.readFCBPPacket
 import net.fenstonsingel.fcbp.shared.sendFCBPPacket
+import java.io.File
 import java.lang.instrument.Instrumentation
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -31,6 +33,8 @@ class FCBPInstrumenter private constructor(
         socket.sendFCBPPacket(packet)
     }
 
+    var loggingDirectory: File? = null
+
     private fun executeSafely(doAction: () -> Unit) {
         try {
             doAction()
@@ -49,6 +53,12 @@ class FCBPInstrumenter private constructor(
             instrumentation.addTransformer(transformer, true)
             val operativeConnectionPacket = FCBPInstrumenterConnected(instrumenterID)
             socket.sendFCBPPacket(operativeConnectionPacket)
+        }
+
+        val initializationStartedPacket = socket.readFCBPPacket()
+        check(initializationStartedPacket is FCBPInitializationStarted) { "Wrong instrumenter initialization start" }
+        initializationStartedPacket.loggingDirectory?.let { providedLoggingDirectory ->
+            loggingDirectory = File(providedLoggingDirectory).apply { mkdirs() }
         }
 
         do {

@@ -13,11 +13,11 @@ class FCBPTransformer(private val instrumenter: FCBPInstrumenter) : ClassFileTra
 
     private val classPool = ClassPool.getDefault()
 
-    private val resultingBytecodeDebugFolder = File("build/fcbp-class-files")
-
-    init {
-        resultingBytecodeDebugFolder.deleteRecursively()
-        resultingBytecodeDebugFolder.mkdir()
+    private val resultingBytecodeDebugFolder by lazy {
+        File(instrumenter.loggingDirectory, "classfiles").apply {
+            deleteRecursively()
+            mkdir()
+        }
     }
 
     override fun transform(
