@@ -15,9 +15,6 @@ import java.nio.channels.Selector
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
 
-/**
- * TODO documentation
- */
 object FCBPServer : Disposable {
 
     private val pendingConnectionChannels = mutableSetOf<SocketChannel>()
@@ -145,7 +142,6 @@ object FCBPServer : Disposable {
         // do nothing
     }
 
-    /** TODO documentation */
     override fun dispose() {
         selectorThread.interrupt()
     }

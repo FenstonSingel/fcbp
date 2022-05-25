@@ -58,24 +58,21 @@ class FCBPExecutionListener : ExecutionListener, Disposable {
         withdrawFCBPInstrumenter()
     }
 
-    /** TODO documentation */
     override fun processStarting(executorId: String, env: ExecutionEnvironment) {
         if ("Debug" != executorId) return
         env.runProfile.injectFCBPInstrumenter()
     }
 
-    /** TODO documentation */
     override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
         if ("Debug" != executorId) return
         env.runProfile.registerFCBPInstrumenter(handler)
     }
 
-    /** TODO documentation */
-    override fun processTerminated(runProfile: RunProfile, handler: ProcessHandler) {
+    override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
+        if ("Debug" != executorId) return
         instrumenterIDsByReferenceHandlers -= handler
     }
 
-    /** TODO documentation */
     override fun dispose() {
         instrumenterIDsByModifiedRunProfiles.keys.forEach { modifiedRunProfile ->
             modifiedRunProfile.withdrawFCBPInstrumenter()
@@ -86,7 +83,6 @@ class FCBPExecutionListener : ExecutionListener, Disposable {
 
         private val instrumenterIDsByReferenceHandlers = mutableMapOf<ProcessHandler, Int>()
 
-        /** TODO documentation */
         fun getInstrumenterID(referenceHandler: ProcessHandler): Int? =
             instrumenterIDsByReferenceHandlers[referenceHandler]
 

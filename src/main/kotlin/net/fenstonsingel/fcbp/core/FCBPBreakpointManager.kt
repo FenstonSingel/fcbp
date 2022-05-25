@@ -8,24 +8,18 @@ import net.fenstonsingel.fcbp.asJavaLineBreakpoint
 import net.fenstonsingel.fcbp.shared.FCBPBreakpoint
 import net.fenstonsingel.fcbp.toFCBPBreakpoint
 
-/**
- * TODO documentation
- */
 class FCBPBreakpointManager(project: Project) {
 
     private val registeredSessions = mutableListOf<FCBPSession>()
 
-    /** TODO documentation */
     fun register(session: FCBPSession) { registeredSessions += session }
 
-    /** TODO documentation */
     fun deregister(session: FCBPSession) { registeredSessions -= session }
 
     private val breakpointManager by lazy { DebuggerManagerEx.getInstanceEx(project).breakpointManager }
 
     private val storage = mutableMapOf<XJavaLineBreakpoint, JavaLineBreakpoint>()
 
-    /** TODO documentation */
     val breakpoints: List<FCBPBreakpoint>
         get() = storage.values.map(JavaLineBreakpoint::toFCBPBreakpoint)
 
@@ -55,19 +49,16 @@ class FCBPBreakpointManager(project: Project) {
         Unit // TODO notify all FCBP sessions
     }
 
-    /** TODO documentation */
     fun addBreakpoint(xBreakpoint: XJavaLineBreakpoint) {
         if (null == xBreakpoint.conditionExpression) return
         recordBreakpoint(xBreakpoint)
     }
 
-    /** TODO documentation */
     fun removeBreakpoint(xBreakpoint: XJavaLineBreakpoint) {
         if (xBreakpoint !in storage) return
         forgetBreakpoint(xBreakpoint)
     }
 
-    /** TODO documentation */
     fun changeBreakpoint(xBreakpoint: XJavaLineBreakpoint) {
         if (null != xBreakpoint.conditionExpression) {
             if (xBreakpoint !in storage) recordBreakpoint(xBreakpoint)

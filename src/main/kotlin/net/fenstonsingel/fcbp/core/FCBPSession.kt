@@ -12,9 +12,6 @@ import net.fenstonsingel.fcbp.shared.FCBPInitializationStarted
 import net.fenstonsingel.fcbp.shared.sendFCBPPacket
 import java.nio.channels.SocketChannel
 
-/**
- * TODO documentation
- */
 class FCBPSession private constructor(val debuggerSession: DebuggerSession) {
 
     private val fcbpBreakpointManager = debuggerSession.project.service<FCBPBreakpointManager>()
@@ -25,7 +22,6 @@ class FCBPSession private constructor(val debuggerSession: DebuggerSession) {
 
     private lateinit var instrumenterChannel: SocketChannel
 
-    /** TODO documentation */
     fun initialize(socketChannel: SocketChannel) {
         with(debuggerSession.process) {
             managerThread.invoke(PrioritizedTask.Priority.HIGH) {
@@ -42,7 +38,6 @@ class FCBPSession private constructor(val debuggerSession: DebuggerSession) {
         instrumenterChannel.sendFCBPPacket(FCBPInitializationCompleted)
     }
 
-    /** TODO documentation */
     fun invalidate() {
         debuggerSessionsToFCBPSessions -= debuggerSession
         fcbpBreakpointManager.deregister(this)
@@ -52,25 +47,21 @@ class FCBPSession private constructor(val debuggerSession: DebuggerSession) {
 
     private val delegatedBreakpoints = mutableListOf<FCBPBreakpoint>()
 
-    /** TODO documentation */
     fun unregisterBreakpoint(breakpoint: FCBPBreakpoint) {
         instrumentedBreakpoints -= breakpoint
         delegatedBreakpoints -= breakpoint
     }
 
-    /** TODO documentation */
     fun registerInstrumentedBreakpoint(breakpoint: FCBPBreakpoint) {
         instrumentedBreakpoints += breakpoint
         delegatedBreakpoints -= breakpoint
     }
 
-    /** TODO documentation */
     fun registerDelegatedBreakpoint(breakpoint: FCBPBreakpoint) {
         instrumentedBreakpoints -= breakpoint
         delegatedBreakpoints += breakpoint
     }
 
-    /** TODO documentation */
     fun analyzeBreakpointConditionStatus(location: Location, expression: String): ThreeState {
         val className = location.declaringType().name()
         val lineNumber = location.lineNumber()
@@ -92,16 +83,13 @@ class FCBPSession private constructor(val debuggerSession: DebuggerSession) {
 
         private val debuggerSessionsToFCBPSessions = mutableMapOf<DebuggerSession, FCBPSession>()
 
-        /** TODO documentation */
         fun launch(debuggerSession: DebuggerSession) {
             debuggerSessionsToFCBPSessions[debuggerSession] = FCBPSession(debuggerSession)
         }
 
-        /** TODO documentation */
         fun getInstance(debuggerSession: DebuggerSession): FCBPSession? =
             debuggerSessionsToFCBPSessions[debuggerSession]
 
-        /** TODO documentation */
         fun findByInstrumenterID(instrumenterID: Int): FCBPSession? =
             debuggerSessionsToFCBPSessions.values.find { fcbpSession -> fcbpSession.instrumenterID == instrumenterID }
 
