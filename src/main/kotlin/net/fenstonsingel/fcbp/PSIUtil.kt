@@ -3,12 +3,14 @@ package net.fenstonsingel.fcbp
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.ui.breakpoints.Breakpoint
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.JavaCodeFragment
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassInitializer
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
@@ -96,8 +98,10 @@ val PsiType.binaryName: String
  * For any PSI reference "X", given PSI reference "Y", substitutes "Y.X" for "X".
  */
 fun PsiJavaCodeReferenceElement.addQualifier(qualifier: PsiJavaCodeReferenceElement) {
-    val psiFactory = JavaPsiFacade.getElementFactory(project)
-    val template = psiFactory.createExpressionFromText("x.y", null)
+    val template = ReadAction.compute<PsiExpression, Nothing> {
+        val psiFactory = JavaPsiFacade.getElementFactory(project)
+        psiFactory.createExpressionFromText("x.y", null)
+    }
 
     /*
      * per documentation, all PSI transformations must occur as write actions
@@ -114,7 +118,9 @@ fun PsiJavaCodeReferenceElement.addQualifier(qualifier: PsiJavaCodeReferenceElem
  * For any PSI reference "X", given a qualifier "Y" as a string, substitutes "Y.X" for "X".
  */
 fun PsiJavaCodeReferenceElement.addQualifier(qualifier: String) {
-    val psiFactory = JavaPsiFacade.getElementFactory(project)
-    val qualifierPsi = psiFactory.createExpressionFromText(qualifier, null) as PsiJavaCodeReferenceElement
+    val qualifierPsi = ReadAction.compute<PsiJavaCodeReferenceElement, Nothing> {
+        val psiFactory = JavaPsiFacade.getElementFactory(project)
+        psiFactory.createExpressionFromText(qualifier, null) as PsiJavaCodeReferenceElement
+    }
     addQualifier(qualifierPsi)
 }

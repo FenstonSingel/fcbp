@@ -67,11 +67,11 @@ class FCBPSession private constructor(val debuggerSession: DebuggerSession) {
         val lineNumber = location.lineNumber()
         while (!Thread.interrupted()) {
             val isInstrumented = instrumentedBreakpoints.find { bp ->
-                bp.klass.name == className && bp.position.lineNumber == lineNumber && bp.condition.body == expression
+                bp.klass.name == className && bp.position.lineNumber == lineNumber
             }
             if (null != isInstrumented) return ThreeState.YES
             val isDelegated = delegatedBreakpoints.find { bp ->
-                bp.klass.name == className && bp.position.lineNumber == lineNumber && bp.condition.body == expression
+                bp.klass.name == className && bp.position.lineNumber == lineNumber
             }
             if (null != isDelegated) return ThreeState.UNSURE
             Thread.sleep(500L) // TODO neaten this busy-waiting to something more adequate
