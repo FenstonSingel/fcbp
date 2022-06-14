@@ -10,8 +10,6 @@ plugins {
     // gradle-changelog-plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
     id("org.jetbrains.changelog") version "1.3.1"
 
-    // detekt linter - read more: https://detekt.github.io/detekt/gradle.html
-    id("io.gitlab.arturbosch.detekt") version "1.18.1"
     // ktlint linter - read more: https://github.com/JLLeitschuh/ktlint-gradle
     id("org.jlleitschuh.gradle.ktlint") version "10.2.0"
 }
@@ -27,7 +25,6 @@ dependencies {
     implementation(project(path = ":shared"))
     runtimeOnly(project(path = ":instrumenter", configuration = "shadow"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.19.0")
 }
 
 // Configure gradle-intellij-plugin plugin.
@@ -50,19 +47,6 @@ changelog {
     groups.set(emptyList())
 }
 
-// Configure detekt plugin.
-// Read more: https://detekt.github.io/detekt/kotlindsl.html
-detekt {
-    config = files("./detekt-config.yml")
-    buildUponDefaultConfig = true
-
-    reports {
-        html.enabled = false
-        xml.enabled = false
-        txt.enabled = false
-    }
-}
-
 tasks {
     // Set the compatibility versions to 11
     withType<JavaCompile> {
@@ -71,9 +55,6 @@ tasks {
     }
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions.jvmTarget = "11"
-    }
-    withType<io.gitlab.arturbosch.detekt.Detekt> {
-        onlyIf { !project.hasProperty("ignoreDetekt") }
     }
 
     patchPluginXml {

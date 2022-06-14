@@ -4,7 +4,6 @@ plugins {
 
     id("com.github.johnrengelman.shadow") version "7.1.0"
 
-    id("io.gitlab.arturbosch.detekt")
     id("org.jlleitschuh.gradle.ktlint")
 }
 
@@ -35,18 +34,6 @@ dependencies {
     javaagentImplementation("org.ow2.asm:asm-commons:9.2")
     javaagentImplementation("org.ow2.asm:asm-util:9.2")
     javaagentImplementation("org.javassist:javassist:3.28.0-GA")
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.19.0")
-}
-
-detekt {
-    config = files("../detekt-config.yml")
-    buildUponDefaultConfig = true
-
-    reports {
-        html.enabled = false
-        xml.enabled = false
-        txt.enabled = false
-    }
 }
 
 tasks {
@@ -56,9 +43,6 @@ tasks {
     }
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions.jvmTarget = "11"
-    }
-    withType<io.gitlab.arturbosch.detekt.Detekt> {
-        onlyIf { !project.hasProperty("ignoreDetekt") }
     }
 
     jar {

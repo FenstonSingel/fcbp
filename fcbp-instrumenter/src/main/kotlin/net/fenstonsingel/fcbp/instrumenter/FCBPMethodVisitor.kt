@@ -16,10 +16,8 @@ class FCBPMethodVisitor(
 
     override fun visitLineNumber(line: Int, start: Label) {
         val breakpoint = breakpoints.find { bp -> line == bp.position.lineNumber }
-        if (null == breakpoint)
-            mv.visitLineNumber(line, start)
-        else
-            breakpointInProcessing = breakpoint
+        if (null == breakpoint) mv.visitLineNumber(line, start)
+        else breakpointInProcessing = breakpoint
     }
 
     override fun visitMethodInsn(

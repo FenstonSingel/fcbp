@@ -2,7 +2,6 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
 
-    id("io.gitlab.arturbosch.detekt")
     id("org.jlleitschuh.gradle.ktlint")
 }
 
@@ -16,18 +15,6 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.19.0")
-}
-
-detekt {
-    config = files("../detekt-config.yml")
-    buildUponDefaultConfig = true
-
-    reports {
-        html.enabled = false
-        xml.enabled = false
-        txt.enabled = false
-    }
 }
 
 tasks {
@@ -37,8 +24,5 @@ tasks {
     }
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions.jvmTarget = "11"
-    }
-    withType<io.gitlab.arturbosch.detekt.Detekt> {
-        onlyIf { !project.hasProperty("ignoreDetekt") }
     }
 }
