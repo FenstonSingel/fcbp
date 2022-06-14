@@ -7,6 +7,8 @@ import com.intellij.util.ThreeState
 import com.sun.jdi.Location
 import net.fenstonsingel.fcbp.shared.FCBPBreakpoint
 import net.fenstonsingel.fcbp.shared.FCBPConditionAdded
+import net.fenstonsingel.fcbp.shared.FCBPConditionChanged
+import net.fenstonsingel.fcbp.shared.FCBPConditionRemoved
 import net.fenstonsingel.fcbp.shared.FCBPInitializationCompleted
 import net.fenstonsingel.fcbp.shared.FCBPInitializationStarted
 import net.fenstonsingel.fcbp.shared.sendFCBPPacket
@@ -49,6 +51,21 @@ class FCBPSession private constructor(val debuggerSession: DebuggerSession) {
         fcbpBreakpointManager.deregister(this)
     }
 
+    fun record(breakpoint: FCBPBreakpoint) {
+        // TODO determine whether known breakpoint status should be reset
+        instrumenterChannel.sendFCBPPacket(FCBPConditionAdded(breakpoint))
+    }
+
+    fun forget(breakpoint: FCBPBreakpoint) {
+        // TODO determine whether known breakpoint status should be reset
+        instrumenterChannel.sendFCBPPacket(FCBPConditionRemoved(breakpoint))
+    }
+
+    fun update(breakpoint: FCBPBreakpoint) {
+        // TODO determine whether known breakpoint status should be reset
+        instrumenterChannel.sendFCBPPacket(FCBPConditionChanged(breakpoint))
+    }
+
     private val instrumentedBreakpoints = mutableListOf<FCBPBreakpoint>()
 
     private val delegatedBreakpoints = mutableListOf<FCBPBreakpoint>()
@@ -63,11 +80,7 @@ class FCBPSession private constructor(val debuggerSession: DebuggerSession) {
         delegatedBreakpoints += breakpoint
     }
 
-    fun unregisterBreakpoint(breakpoint: FCBPBreakpoint) {
-        instrumentedBreakpoints -= breakpoint
-        delegatedBreakpoints -= breakpoint
-    }
-
+    // TODO take into comparison account lambda ordinals
     fun analyzeBreakpointConditionStatus(location: Location): ThreeState {
         val className = location.declaringType().name()
         val lineNumber = location.lineNumber()

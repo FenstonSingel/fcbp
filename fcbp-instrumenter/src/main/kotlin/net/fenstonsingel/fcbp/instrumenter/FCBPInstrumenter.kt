@@ -2,8 +2,11 @@ package net.fenstonsingel.fcbp.instrumenter
 
 import net.fenstonsingel.fcbp.shared.FCBPBreakpoint
 import net.fenstonsingel.fcbp.shared.FCBPConditionAdded
+import net.fenstonsingel.fcbp.shared.FCBPConditionChanged
 import net.fenstonsingel.fcbp.shared.FCBPConditionDelegated
 import net.fenstonsingel.fcbp.shared.FCBPConditionInstrumented
+import net.fenstonsingel.fcbp.shared.FCBPConditionRemoved
+import net.fenstonsingel.fcbp.shared.FCBPDebuggerEvent
 import net.fenstonsingel.fcbp.shared.FCBPInitializationCompleted
 import net.fenstonsingel.fcbp.shared.FCBPInitializationStarted
 import net.fenstonsingel.fcbp.shared.FCBPInstrumenterConnected
@@ -64,12 +67,7 @@ class FCBPInstrumenter private constructor(
         do {
             val packet = socket.readFCBPPacket()
             if (packet !is FCBPConditionAdded) continue
-            if (packet.breakpoint.shouldBeInstrumented) {
-                val className = packet.breakpoint.klass.name.replace('.', '/')
-                innerBreakpointsByClassName.getOrPut(className, ::mutableListOf) += packet.breakpoint
-            } else {
-                tellBreakpointStatusToDebugger(packet.breakpoint, isInstrumented = false)
-            }
+            addBreakpoint(packet.breakpoint)
         } while (packet !is FCBPInitializationCompleted)
     }
 
@@ -79,7 +77,52 @@ class FCBPInstrumenter private constructor(
 
     private fun work() {
         val packet = socket.readFCBPPacket()
-        // TODO support breakpoint events after starting the program under debug
+        if (packet !is FCBPDebuggerEvent) return
+
+        when (packet) {
+            is FCBPConditionAdded -> addBreakpoint(packet.breakpoint)
+            is FCBPConditionRemoved -> removeBreakpoint(packet.breakpoint)
+            is FCBPConditionChanged -> changeBreakpoint(packet.breakpoint)
+        }
+    }
+
+    // TODO deal with classes that have already been loaded
+    private fun addBreakpoint(breakpoint: FCBPBreakpoint) {
+        val className = breakpoint.klass.name.replace('.', '/')
+        val classBreakpoints = innerBreakpointsByClassName.getOrPut(className, ::mutableListOf)
+        check(breakpoint !in classBreakpoints) { "Newly added breakpoint is already accounted for" }
+
+        if (breakpoint.shouldBeInstrumented) {
+            classBreakpoints += breakpoint
+        } else {
+            tellBreakpointStatusToDebugger(breakpoint, isInstrumented = false)
+        }
+    }
+
+    // TODO deal with classes that have already been loaded
+    private fun removeBreakpoint(breakpoint: FCBPBreakpoint) {
+        val className = breakpoint.klass.name.replace('.', '/')
+        val classBreakpoints = innerBreakpointsByClassName[className]
+        checkNotNull(classBreakpoints) { "Removed breakpoint wasn't accounted for" }
+        check(breakpoint in classBreakpoints) { "Removed breakpoint wasn't accounted for" }
+
+        classBreakpoints -= breakpoint
+        tellBreakpointStatusToDebugger(breakpoint, isInstrumented = false)
+    }
+
+    // TODO deal with classes that have already been loaded
+    private fun changeBreakpoint(breakpoint: FCBPBreakpoint) {
+        val className = breakpoint.klass.name.replace('.', '/')
+        val classBreakpoints = innerBreakpointsByClassName[className]
+        checkNotNull(classBreakpoints) { "Changed breakpoint wasn't accounted for" }
+        check(breakpoint in classBreakpoints) { "Changed breakpoint wasn't accounted for" }
+
+        classBreakpoints -= breakpoint
+        if (breakpoint.shouldBeInstrumented) {
+            classBreakpoints += breakpoint
+        } else {
+            tellBreakpointStatusToDebugger(breakpoint, isInstrumented = false)
+        }
     }
 
     private fun run() {

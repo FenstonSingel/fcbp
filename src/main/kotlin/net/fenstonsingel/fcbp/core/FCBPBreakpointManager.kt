@@ -30,7 +30,8 @@ class FCBPBreakpointManager(project: Project) {
         }
         storage[xBreakpoint] = breakpoint
 
-        Unit // TODO notify all FCBP sessions
+        val fcbpBreakpoint = breakpoint.toFCBPBreakpoint()
+        registeredSessions.forEach { session -> session.record(fcbpBreakpoint) }
     }
 
     private fun forgetBreakpoint(xBreakpoint: XJavaLineBreakpoint) {
@@ -38,7 +39,8 @@ class FCBPBreakpointManager(project: Project) {
             "Invalid XJavaLineBreakpoint passed to be forgotten or valid JavaLineBreakpoint wasn't properly recorded"
         }
 
-        Unit // TODO notify all FCBP sessions
+        val fcbpBreakpoint = breakpoint.toFCBPBreakpoint()
+        registeredSessions.forEach { session -> session.forget(fcbpBreakpoint) }
     }
 
     private fun updateBreakpoint(xBreakpoint: XJavaLineBreakpoint) {
@@ -46,7 +48,8 @@ class FCBPBreakpointManager(project: Project) {
             "Invalid XJavaLineBreakpoint passed to be updated or valid JavaLineBreakpoint wasn't properly recorded"
         }
 
-        Unit // TODO notify all FCBP sessions
+        val fcbpBreakpoint = breakpoint.toFCBPBreakpoint()
+        registeredSessions.forEach { session -> session.update(fcbpBreakpoint) }
     }
 
     fun addBreakpoint(xBreakpoint: XJavaLineBreakpoint) {

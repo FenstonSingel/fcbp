@@ -1,5 +1,6 @@
 package net.fenstonsingel.fcbp
 
+import com.intellij.debugger.engine.evaluation.TextWithImports
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.ui.breakpoints.Breakpoint
@@ -18,15 +19,19 @@ import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.PsiClassReferenceType
+import com.intellij.xdebugger.XExpression
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
 
 /**
  * A PSI element representing the breakpoint's condition,
- * or null if the breakpoint doesn't have a condition.
+ * or a PSI element for an empty string (with proper evaluation context)
+ * if the breakpoint doesn't have a condition.
  */
-val Breakpoint<*>.conditionPsi: JavaCodeFragment?
+val Breakpoint<*>.conditionPsi: JavaCodeFragment
     get() {
-        val condition = TextWithImportsImpl.fromXExpression(xBreakpoint.conditionExpression) ?: return null
-        val context = evaluationElement // TODO the case of this being null is untested
+        val conditionExpression: XExpression = xBreakpoint.conditionExpression ?: XExpressionImpl.EMPTY_EXPRESSION
+        val condition: TextWithImports = TextWithImportsImpl.fromXExpression(conditionExpression)
+        val context = evaluationElement // the case of this being null is untested
         val codeFragmentFactory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(condition, context)
         return codeFragmentFactory.createCodeFragment(condition, context, project)
     }
@@ -67,15 +72,14 @@ val PsiElement.enclosingClass: PsiClass
  */
 val PsiMember.binaryName: String?
     get() = when (this) {
-        is PsiClass -> containingClass.let { outerClass ->
-            if (null != outerClass) "${outerClass.binaryName}$$name" else qualifiedName
-        }
+        is PsiClass ->
+            containingClass.let { outerClass -> if (null != outerClass) "${outerClass.binaryName}$$name" else qualifiedName }
         is PsiMethod ->
             if (!isConstructor) name
             else allEnclosingClasses.reversed().map { klass -> klass.name }.joinToString(separator = "$")
         is PsiClassInitializer -> "<clinit>"
         // TODO process enum classes correctly
-        // TODO process anonymous classes/lambdas correctly
+        // TODO process anonymous objects correctly
         else -> null
     }
 
@@ -85,13 +89,15 @@ val PsiMember.binaryName: String?
  */
 val PsiType.binaryName: String
     get() = when (this) {
-        is PsiPrimitiveType -> name
+        is PsiPrimitiveType ->
+            name
         is PsiClassReferenceType ->
             when (val klass = checkNotNull(resolve()) { "Method parameter's type resolution failed" }) {
                 is PsiTypeParameter -> klass.extendsListTypes.firstOrNull()?.binaryName ?: "java.lang.Object"
                 else -> checkNotNull(klass.binaryName) { "Method parameter's type (somehow) has no binary name" }
             }
-        else -> throw IllegalStateException("Unknown PsiType subclass encountered during binary name construction")
+        else ->
+            throw IllegalStateException("Unknown PsiType subclass encountered during binary name construction")
     }
 
 /**
@@ -122,5 +128,6 @@ fun PsiJavaCodeReferenceElement.addQualifier(qualifier: String) {
         val psiFactory = JavaPsiFacade.getElementFactory(project)
         psiFactory.createExpressionFromText(qualifier, null) as PsiJavaCodeReferenceElement
     }
+
     addQualifier(qualifierPsi)
 }

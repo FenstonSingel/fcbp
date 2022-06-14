@@ -68,7 +68,7 @@ private fun prepareConditionForJavassist(condition: JavaCodeFragment): PreparedC
             super.visitReferenceElement(reference) // maintaining recursion
 
             // only leftmost reference of any dot-qualified expression is of any interest to us
-            if (reference.qualifier != null) return
+            if (null != reference.qualifier) return
 
             val target = reference.resolve()
             checkNotNull(target) { "Unresolved entity $reference found in a breakpoint condition $condition" }
@@ -76,7 +76,7 @@ private fun prepareConditionForJavassist(condition: JavaCodeFragment): PreparedC
             when {
                 target is PsiQualifiedNamedElement -> { // resolving types to their FQN (e.g. in static method calls)
                     val qualifier = target.qualifiedName?.substringBeforeLast('.')
-                    if (qualifier != null) qualifiersToAdd += qualifier to reference
+                    if (null != qualifier) qualifiersToAdd += qualifier to reference
                 }
             }
         }
@@ -106,7 +106,7 @@ private data class FCBPBreakpointInitializationData(
 /** TODO documentation */
 fun JavaLineBreakpoint.toFCBPBreakpoint(): FCBPBreakpoint {
     val initializationData = ReadAction.compute<FCBPBreakpointInitializationData, Nothing> {
-        val conditionPsi = checkNotNull(conditionPsi) { "A supposedly conditional breakpoint has no condition PSI" }
+        val conditionPsi = conditionPsi
         val context = checkNotNull(conditionPsi.context) { "Condition PSI has no evaluation context" }
 
         val klass = context.enclosingClass
@@ -126,8 +126,10 @@ fun JavaLineBreakpoint.toFCBPBreakpoint(): FCBPBreakpoint {
                     parameters
                 }
             }
-            is PsiClassInitializer -> emptyList()
-            else -> throw IllegalStateException("Property enclosingBehavior returned something other than a behavior")
+            is PsiClassInitializer ->
+                emptyList()
+            else ->
+                throw IllegalStateException("Property enclosingBehavior returned something other than a behavior")
         }
 
         val lineNumber = lineIndex + 1
