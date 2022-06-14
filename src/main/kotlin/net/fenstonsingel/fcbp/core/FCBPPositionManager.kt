@@ -19,7 +19,7 @@ class FCBPPositionManager(private val session: FCBPSession) : PositionManagerEx(
         frame: StackFrameProxyImpl,
         location: Location,
         expression: String
-    ): ThreeState = session.analyzeBreakpointConditionStatus(location, expression)
+    ): ThreeState = session.analyzeBreakpointConditionStatus(location)
 
     /*
      * this is not a valid position manager, but merely a stub to be able to interrupt condition evaluations

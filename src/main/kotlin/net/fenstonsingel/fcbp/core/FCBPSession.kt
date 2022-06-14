@@ -16,22 +16,28 @@ class FCBPSession private constructor(val debuggerSession: DebuggerSession) {
 
     private val fcbpBreakpointManager = debuggerSession.project.service<FCBPBreakpointManager>()
 
-    init {
-        fcbpBreakpointManager.register(this)
-    }
-
     private lateinit var instrumenterChannel: SocketChannel
 
     fun initialize(socketChannel: SocketChannel) {
+        instrumenterChannel = socketChannel
+
+        // inject a PositionManager that will prevent debugger-side evaluation of instrumented conditions
         with(debuggerSession.process) {
             managerThread.invoke(PrioritizedTask.Priority.HIGH) {
                 positionManager.appendPositionManager(FCBPPositionManager(this@FCBPSession))
             }
         }
-        instrumenterChannel = socketChannel
-        val instrumenterLoggingDirectory: String? = debuggerSession.project.basePath?.let { "$it/build/fcbp" }
+
+        // transfer initialization info to the instrumenter
+        val instrumenterLoggingDirectory = debuggerSession.project.basePath?.let { "$it/build/fcbp" }
         instrumenterChannel.sendFCBPPacket(FCBPInitializationStarted(instrumenterLoggingDirectory))
-        fcbpBreakpointManager.breakpoints.forEach { breakpoint ->
+
+        // extract all current breakpoints and register to FCBPBreakpointManager for breakpoint updates
+        val currentBreakpoints = fcbpBreakpointManager.breakpoints
+        fcbpBreakpointManager.register(this)
+
+        // transfer all current breakpoints to the instrumenter
+        currentBreakpoints.forEach { breakpoint ->
             val breakpointAddedPacket = FCBPConditionAdded(breakpoint)
             instrumenterChannel.sendFCBPPacket(breakpointAddedPacket)
         }
@@ -47,11 +53,6 @@ class FCBPSession private constructor(val debuggerSession: DebuggerSession) {
 
     private val delegatedBreakpoints = mutableListOf<FCBPBreakpoint>()
 
-    fun unregisterBreakpoint(breakpoint: FCBPBreakpoint) {
-        instrumentedBreakpoints -= breakpoint
-        delegatedBreakpoints -= breakpoint
-    }
-
     fun registerInstrumentedBreakpoint(breakpoint: FCBPBreakpoint) {
         instrumentedBreakpoints += breakpoint
         delegatedBreakpoints -= breakpoint
@@ -62,7 +63,12 @@ class FCBPSession private constructor(val debuggerSession: DebuggerSession) {
         delegatedBreakpoints += breakpoint
     }
 
-    fun analyzeBreakpointConditionStatus(location: Location, expression: String): ThreeState {
+    fun unregisterBreakpoint(breakpoint: FCBPBreakpoint) {
+        instrumentedBreakpoints -= breakpoint
+        delegatedBreakpoints -= breakpoint
+    }
+
+    fun analyzeBreakpointConditionStatus(location: Location): ThreeState {
         val className = location.declaringType().name()
         val lineNumber = location.lineNumber()
         while (!Thread.interrupted()) {
