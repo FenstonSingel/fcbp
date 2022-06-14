@@ -11,6 +11,12 @@ import java.security.ProtectionDomain
 
 class FCBPTransformer(private val instrumenter: FCBPInstrumenter) : ClassFileTransformer {
 
+    private val innerLoadedClasses = mutableSetOf<String>()
+
+    // TODO research less memory-intensive ways to monitor loaded classes
+    val loadedClasses: Set<String>
+        get() = innerLoadedClasses
+
     private val classPool = ClassPool.getDefault()
 
     private val resultingBytecodeDebugFolder by lazy {
@@ -27,6 +33,8 @@ class FCBPTransformer(private val instrumenter: FCBPInstrumenter) : ClassFileTra
         protectionDomain: ProtectionDomain,
         classfileBuffer: ByteArray
     ): ByteArray? {
+        innerLoadedClasses += className
+
         val breakpoints = instrumenter.breakpointsByClassName[className] ?: return null
         val breakpointsByMethod = breakpoints.groupBy(FCBPBreakpoint::method)
 
@@ -66,8 +74,12 @@ class FCBPTransformer(private val instrumenter: FCBPInstrumenter) : ClassFileTra
         // this is purely a debug thing that saves resulting bytecodes to a hard drive for further analysis
         val resultingBytecode = classWriter.toByteArray()
         val resultingBytecodeFilePath = "${className.replace('/', '.')}.class"
-        File(resultingBytecodeDebugFolder, resultingBytecodeFilePath).outputStream().write(resultingBytecode)
+        File(resultingBytecodeDebugFolder, resultingBytecodeFilePath).outputStream().apply {
+            write(resultingBytecode)
+            close()
+        }
 
+        klass.detach() // let Javassist know to use original bytecodes when dealing with this class next time
         return resultingBytecode
     }
 

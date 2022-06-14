@@ -86,7 +86,6 @@ class FCBPInstrumenter private constructor(
         }
     }
 
-    // TODO deal with classes that have already been loaded
     private fun addBreakpoint(breakpoint: FCBPBreakpoint) {
         val className = breakpoint.klass.name.replace('.', '/')
         val classBreakpoints = innerBreakpointsByClassName.getOrPut(className, ::mutableListOf)
@@ -94,12 +93,15 @@ class FCBPInstrumenter private constructor(
 
         if (breakpoint.shouldBeInstrumented) {
             classBreakpoints += breakpoint
+            if (className in transformer.loadedClasses) {
+                val klass = Class.forName(breakpoint.klass.name)
+                instrumentation.retransformClasses(klass)
+            }
         } else {
             tellBreakpointStatusToDebugger(breakpoint, isInstrumented = false)
         }
     }
 
-    // TODO deal with classes that have already been loaded
     private fun removeBreakpoint(breakpoint: FCBPBreakpoint) {
         val className = breakpoint.klass.name.replace('.', '/')
         val classBreakpoints = innerBreakpointsByClassName[className]
@@ -108,9 +110,13 @@ class FCBPInstrumenter private constructor(
 
         classBreakpoints -= breakpoint
         tellBreakpointStatusToDebugger(breakpoint, isInstrumented = false)
+
+        if (className in transformer.loadedClasses) {
+            val klass = Class.forName(breakpoint.klass.name)
+            instrumentation.retransformClasses(klass)
+        }
     }
 
-    // TODO deal with classes that have already been loaded
     private fun changeBreakpoint(breakpoint: FCBPBreakpoint) {
         val className = breakpoint.klass.name.replace('.', '/')
         val classBreakpoints = innerBreakpointsByClassName[className]
@@ -122,6 +128,11 @@ class FCBPInstrumenter private constructor(
             classBreakpoints += breakpoint
         } else {
             tellBreakpointStatusToDebugger(breakpoint, isInstrumented = false)
+        }
+
+        if (className in transformer.loadedClasses) {
+            val klass = Class.forName(breakpoint.klass.name)
+            instrumentation.retransformClasses(klass)
         }
     }
 
