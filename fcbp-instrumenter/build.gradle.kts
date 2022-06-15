@@ -28,12 +28,12 @@ repositories {
 
 dependencies {
     javaagentImplementation(project(path = ":shared"))
-    javaagentImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
+    javaagentImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
     javaagentImplementation("org.jetbrains.kotlin:kotlin-stdlib:1.5.31")
-    javaagentImplementation("org.ow2.asm:asm:9.2")
-    javaagentImplementation("org.ow2.asm:asm-commons:9.2")
-    javaagentImplementation("org.ow2.asm:asm-util:9.2")
-    javaagentImplementation("org.javassist:javassist:3.28.0-GA")
+    javaagentImplementation("org.ow2.asm:asm:9.3")
+    javaagentImplementation("org.ow2.asm:asm-commons:9.3")
+    javaagentImplementation("org.ow2.asm:asm-util:9.3")
+    javaagentImplementation("org.javassist:javassist:3.29.0-GA")
 }
 
 tasks {
