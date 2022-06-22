@@ -5,7 +5,9 @@ import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.extensions.PluginId
 import java.util.Random
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -37,7 +39,8 @@ class FCBPExecutionListener : ExecutionListener, Disposable {
                     if (null != userArguments) "$instrumenterVMArgument $userArguments" else instrumenterVMArgument
                 }
             // add more configurations here
-            else -> return
+            else ->
+                return
         }
         instrumenterIDsByModifiedRunProfiles[this] = instrumenterID
     }
@@ -47,7 +50,8 @@ class FCBPExecutionListener : ExecutionListener, Disposable {
             is ApplicationConfiguration ->
                 vmParameters = vmParameters.removeInstrumenterVMArgument()
             // add more configurations here
-            else -> return
+            else ->
+                return
         }
         instrumenterIDsByModifiedRunProfiles -= this
     }
@@ -90,8 +94,15 @@ class FCBPExecutionListener : ExecutionListener, Disposable {
         private val idSource = AtomicInteger(Random().nextInt(4096))
         private val vacantInstrumenterID get() = idSource.incrementAndGet()
 
-        // FIXME the FCBP plugin version is hard-coded
-        private const val instrumenterJarName = "fcbp/lib/instrumenter-0.0.0-all.jar"
+        private val fcbpPluginVersion: String
+            get() {
+                val fcbpPluginId = PluginId.getId("net.fenstonsingel.fcbp")
+                val fcbpPluginDescriptor = PluginManagerCore.getPlugin(fcbpPluginId)
+                checkNotNull(fcbpPluginDescriptor) { "FCBP plugin descriptor not found by PluginManagerCore" }
+                return fcbpPluginDescriptor.version
+            }
+
+        private val instrumenterJarName = "fcbp/lib/instrumenter-$fcbpPluginVersion-all.jar"
         private val instrumenterJarPath get() = "${System.getProperty("idea.plugins.path")}/$instrumenterJarName"
 
         private fun getInstrumenterVMArgument(id: String) = "-javaagent:\"$instrumenterJarPath\"=\"$id\""

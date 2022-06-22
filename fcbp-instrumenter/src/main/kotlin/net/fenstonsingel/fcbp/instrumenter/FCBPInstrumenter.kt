@@ -4,6 +4,7 @@ import net.fenstonsingel.fcbp.shared.FCBPBreakpoint
 import net.fenstonsingel.fcbp.shared.FCBPConditionAdded
 import net.fenstonsingel.fcbp.shared.FCBPConditionChanged
 import net.fenstonsingel.fcbp.shared.FCBPConditionDelegated
+import net.fenstonsingel.fcbp.shared.FCBPConditionForgotten
 import net.fenstonsingel.fcbp.shared.FCBPConditionInstrumented
 import net.fenstonsingel.fcbp.shared.FCBPConditionRemoved
 import net.fenstonsingel.fcbp.shared.FCBPDebuggerEvent
@@ -31,21 +32,16 @@ class FCBPInstrumenter private constructor(
     val breakpointsByClassName: Map<String, List<FCBPBreakpoint>>
         get() = innerBreakpointsByClassName
 
-    fun tellBreakpointStatusToDebugger(breakpoint: FCBPBreakpoint, isInstrumented: Boolean) {
-        val packet = if (isInstrumented) FCBPConditionInstrumented(breakpoint) else FCBPConditionDelegated(breakpoint)
+    fun transmitConditionStatus(breakpoint: FCBPBreakpoint, status: FCBPConditionStatus) {
+        val packet = when (status) {
+            FCBPConditionStatus.INSTRUMENTED -> FCBPConditionInstrumented(breakpoint)
+            FCBPConditionStatus.DELEGATED -> FCBPConditionDelegated(breakpoint)
+            FCBPConditionStatus.FORGOTTEN -> FCBPConditionForgotten(breakpoint)
+        }
         socket.sendFCBPPacket(packet)
     }
 
     var loggingDirectory: File? = null
-
-    private fun executeSafely(doAction: () -> Unit) {
-        try {
-            doAction()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            instrumentation.removeTransformer(transformer)
-        }
-    }
 
     private fun initialize() {
         if (!instrumentation.isRetransformClassesSupported) {
@@ -66,18 +62,17 @@ class FCBPInstrumenter private constructor(
 
         do {
             val packet = socket.readFCBPPacket()
-            if (packet !is FCBPConditionAdded) continue
-            addBreakpoint(packet.breakpoint)
+            when (packet) {
+                is FCBPConditionAdded -> addBreakpoint(packet.breakpoint)
+                is FCBPInitializationCompleted -> Unit // finish the initialization process
+                else -> throw IllegalStateException("Incorrect instrumenter initialization process")
+            }
         } while (packet !is FCBPInitializationCompleted)
-    }
-
-    init {
-        executeSafely { initialize() }
     }
 
     private fun work() {
         val packet = socket.readFCBPPacket()
-        if (packet !is FCBPDebuggerEvent) return
+        check(packet is FCBPDebuggerEvent) { "Incorrect debugger event packet received" }
 
         when (packet) {
             is FCBPConditionAdded -> addBreakpoint(packet.breakpoint)
@@ -93,12 +88,9 @@ class FCBPInstrumenter private constructor(
 
         if (breakpoint.shouldBeInstrumented) {
             classBreakpoints += breakpoint
-            if (className in transformer.loadedClasses) {
-                val klass = Class.forName(breakpoint.klass.name)
-                instrumentation.retransformClasses(klass)
-            }
+            retransformClassIfLoaded(className)
         } else {
-            tellBreakpointStatusToDebugger(breakpoint, isInstrumented = false)
+            transmitConditionStatus(breakpoint, FCBPConditionStatus.DELEGATED)
         }
     }
 
@@ -109,12 +101,8 @@ class FCBPInstrumenter private constructor(
         check(breakpoint in classBreakpoints) { "Removed breakpoint wasn't accounted for" }
 
         classBreakpoints -= breakpoint
-        tellBreakpointStatusToDebugger(breakpoint, isInstrumented = false)
-
-        if (className in transformer.loadedClasses) {
-            val klass = Class.forName(breakpoint.klass.name)
-            instrumentation.retransformClasses(klass)
-        }
+        transmitConditionStatus(breakpoint, FCBPConditionStatus.FORGOTTEN)
+        retransformClassIfLoaded(className)
     }
 
     private fun changeBreakpoint(breakpoint: FCBPBreakpoint) {
@@ -123,18 +111,29 @@ class FCBPInstrumenter private constructor(
         checkNotNull(classBreakpoints) { "Changed breakpoint wasn't accounted for" }
         check(breakpoint in classBreakpoints) { "Changed breakpoint wasn't accounted for" }
 
-        classBreakpoints -= breakpoint
-        if (breakpoint.shouldBeInstrumented) {
-            classBreakpoints += breakpoint
-        } else {
-            tellBreakpointStatusToDebugger(breakpoint, isInstrumented = false)
-        }
+        classBreakpoints -= breakpoint // remove instance with the old condition
+        if (breakpoint.shouldBeInstrumented) classBreakpoints += breakpoint // re-add instance with a new condition
+        else transmitConditionStatus(breakpoint, FCBPConditionStatus.DELEGATED)
+        retransformClassIfLoaded(className)
+    }
 
+    private fun retransformClassIfLoaded(className: String) {
         if (className in transformer.loadedClasses) {
-            val klass = Class.forName(breakpoint.klass.name)
+            val klass = Class.forName(className.replace('/', '.'))
             instrumentation.retransformClasses(klass)
         }
     }
+
+    private fun executeSafely(doAction: () -> Unit) {
+        try {
+            doAction()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            instrumentation.removeTransformer(transformer)
+        }
+    }
+
+    init { executeSafely { initialize() } }
 
     private fun run() {
         executeSafely {

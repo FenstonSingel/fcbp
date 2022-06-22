@@ -9,7 +9,9 @@ sealed class FCBPPacket
 data class FCBPInstrumenterConnected(val instrumenterID: Int, val isOperative: Boolean = true) : FCBPPacket()
 
 @Serializable
-data class FCBPInitializationStarted(val loggingDirectory: String?) : FCBPPacket()
+data class FCBPInitializationStarted(
+    val loggingDirectory: String?
+) : FCBPPacket()
 
 @Serializable
 object FCBPInitializationCompleted : FCBPPacket()
@@ -38,3 +40,6 @@ data class FCBPConditionInstrumented(override val breakpoint: FCBPBreakpoint) : 
 
 @Serializable
 data class FCBPConditionDelegated(override val breakpoint: FCBPBreakpoint) : FCBPInstrumenterEvent()
+
+@Serializable
+data class FCBPConditionForgotten(override val breakpoint: FCBPBreakpoint) : FCBPInstrumenterEvent()

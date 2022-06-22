@@ -1,6 +1,7 @@
 package net.fenstonsingel.fcbp.instrumenter
 
 import javassist.ClassPool
+import javassist.CtBehavior
 import javassist.CtClass
 import net.fenstonsingel.fcbp.shared.FCBPBreakpoint
 import org.objectweb.asm.ClassReader
@@ -40,14 +41,13 @@ class FCBPTransformer(private val instrumenter: FCBPInstrumenter) : ClassFileTra
 
         val unsupportedBreakpoints = mutableSetOf<FCBPBreakpoint>()
         val klass: CtClass = classPool[className.replace('/', '.')]
-        for (behavior in klass.declaredBehaviors) {
-            if (null == behavior) continue
+        for (behavior: CtBehavior in klass.declaredBehaviors) {
             val methodBreakpoints = breakpointsByMethod[behavior.toFCBPMethod()] ?: continue
             for (breakpoint in methodBreakpoints) {
                 try {
                     behavior.insertAt(
                         breakpoint.position.lineNumber,
-                        "if (${breakpoint.condition.body}) { $FCBPCompilationPlaceholder; }"
+                        "if (${breakpoint.condition.expression}) { $FCBPCompilationPlaceholder; }"
                     )
                 } catch (e: Exception) {
                     unsupportedBreakpoints += breakpoint
@@ -64,12 +64,12 @@ class FCBPTransformer(private val instrumenter: FCBPInstrumenter) : ClassFileTra
             classReader.accept(fcbpClassVisitor, ClassReader.EXPAND_FRAMES)
         } catch (e: Exception) {
             e.printStackTrace()
-            breakpoints.forEach { bp -> instrumenter.tellBreakpointStatusToDebugger(bp, isInstrumented = false) }
+            breakpoints.forEach { bp -> instrumenter.transmitConditionStatus(bp, FCBPConditionStatus.DELEGATED) }
             return null
         }
 
-        unsupportedBreakpoints.forEach { bp -> instrumenter.tellBreakpointStatusToDebugger(bp, isInstrumented = false) }
-        supportedBreakpoints.forEach { bp -> instrumenter.tellBreakpointStatusToDebugger(bp, isInstrumented = true) }
+        unsupportedBreakpoints.forEach { bp -> instrumenter.transmitConditionStatus(bp, FCBPConditionStatus.DELEGATED) }
+        supportedBreakpoints.forEach { bp -> instrumenter.transmitConditionStatus(bp, FCBPConditionStatus.INSTRUMENTED) }
 
         // this is purely a debug thing that saves resulting bytecodes to a hard drive for further analysis
         val resultingBytecode = classWriter.toByteArray()

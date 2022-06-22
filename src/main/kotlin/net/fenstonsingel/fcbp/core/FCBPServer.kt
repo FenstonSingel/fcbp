@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable
 import kotlinx.serialization.SerializationException
 import net.fenstonsingel.fcbp.shared.FCBPBreakpoint
 import net.fenstonsingel.fcbp.shared.FCBPConditionDelegated
+import net.fenstonsingel.fcbp.shared.FCBPConditionForgotten
 import net.fenstonsingel.fcbp.shared.FCBPConditionInstrumented
 import net.fenstonsingel.fcbp.shared.FCBPInstrumenterConnected
 import net.fenstonsingel.fcbp.shared.FCBPPacket
@@ -94,6 +95,7 @@ object FCBPServer : Disposable {
                 is FCBPInstrumenterConnected -> channel.processInstrumenterConnection(packet)
                 is FCBPConditionInstrumented -> registerInstrumentedBreakpoint(channel, packet.breakpoint)
                 is FCBPConditionDelegated -> registerDelegatedBreakpoint(channel, packet.breakpoint)
+                is FCBPConditionForgotten -> unregisterBreakpoint(channel, packet.breakpoint)
                 // process more events from instrumenter side here
                 else -> Unit
             }
@@ -125,6 +127,11 @@ object FCBPServer : Disposable {
     private fun registerDelegatedBreakpoint(channel: SocketChannel, breakpoint: FCBPBreakpoint) {
         val session = sessionsByInstrumenterChannels[channel] ?: return
         session.registerDelegatedBreakpoint(breakpoint)
+    }
+
+    private fun unregisterBreakpoint(channel: SocketChannel, breakpoint: FCBPBreakpoint) {
+        val session = sessionsByInstrumenterChannels[channel] ?: return
+        session.unregisterBreakpoint(breakpoint)
     }
 
     /**

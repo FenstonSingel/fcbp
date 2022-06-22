@@ -51,18 +51,15 @@ class FCBPSession private constructor(val debuggerSession: DebuggerSession) {
         fcbpBreakpointManager.deregister(this)
     }
 
-    fun record(breakpoint: FCBPBreakpoint) {
-        // TODO determine whether known breakpoint status should be reset
+    fun add(breakpoint: FCBPBreakpoint) {
         instrumenterChannel.sendFCBPPacket(FCBPConditionAdded(breakpoint))
     }
 
-    fun forget(breakpoint: FCBPBreakpoint) {
-        // TODO determine whether known breakpoint status should be reset
+    fun remove(breakpoint: FCBPBreakpoint) {
         instrumenterChannel.sendFCBPPacket(FCBPConditionRemoved(breakpoint))
     }
 
-    fun update(breakpoint: FCBPBreakpoint) {
-        // TODO determine whether known breakpoint status should be reset
+    fun change(breakpoint: FCBPBreakpoint) {
         instrumenterChannel.sendFCBPPacket(FCBPConditionChanged(breakpoint))
     }
 
@@ -80,7 +77,14 @@ class FCBPSession private constructor(val debuggerSession: DebuggerSession) {
         delegatedBreakpoints += breakpoint
     }
 
+    fun unregisterBreakpoint(breakpoint: FCBPBreakpoint) {
+        instrumentedBreakpoints -= breakpoint
+        delegatedBreakpoints -= breakpoint
+    }
+
     // TODO take into comparison account lambda ordinals
+    // TODO this is a VERY clumsy solution with regards to potential data races
+    // (e.g. when a new/updated CBP is hit before the instrumenter could do anything about it)
     fun analyzeBreakpointConditionStatus(location: Location): ThreeState {
         val className = location.declaringType().name()
         val lineNumber = location.lineNumber()

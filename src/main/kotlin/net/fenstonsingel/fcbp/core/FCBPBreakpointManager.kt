@@ -23,7 +23,7 @@ class FCBPBreakpointManager(project: Project) {
     val breakpoints: List<FCBPBreakpoint>
         get() = storage.values.map(JavaLineBreakpoint::toFCBPBreakpoint)
 
-    private fun recordBreakpoint(xBreakpoint: XJavaLineBreakpoint) {
+    private fun add(xBreakpoint: XJavaLineBreakpoint) {
         val potentialBreakpoint = breakpointManager.breakpoints.find { bp -> bp.xBreakpoint == xBreakpoint }
         val breakpoint = checkNotNull(potentialBreakpoint?.asJavaLineBreakpoint) {
             "No appropriate JavaLineBreakpoint found for XJavaLineBreakpoint"
@@ -31,43 +31,43 @@ class FCBPBreakpointManager(project: Project) {
         storage[xBreakpoint] = breakpoint
 
         val fcbpBreakpoint = breakpoint.toFCBPBreakpoint()
-        registeredSessions.forEach { session -> session.record(fcbpBreakpoint) }
+        registeredSessions.forEach { session -> session.add(fcbpBreakpoint) }
     }
 
-    private fun forgetBreakpoint(xBreakpoint: XJavaLineBreakpoint) {
+    private fun remove(xBreakpoint: XJavaLineBreakpoint) {
         val breakpoint = checkNotNull(storage.remove(xBreakpoint)) {
-            "Invalid XJavaLineBreakpoint passed to be forgotten or valid JavaLineBreakpoint wasn't properly recorded"
+            "Invalid XJavaLineBreakpoint passed to be removed or valid JavaLineBreakpoint wasn't properly recorded"
         }
 
         val fcbpBreakpoint = breakpoint.toFCBPBreakpoint()
-        registeredSessions.forEach { session -> session.forget(fcbpBreakpoint) }
+        registeredSessions.forEach { session -> session.remove(fcbpBreakpoint) }
     }
 
-    private fun updateBreakpoint(xBreakpoint: XJavaLineBreakpoint) {
+    private fun change(xBreakpoint: XJavaLineBreakpoint) {
         val breakpoint = checkNotNull(storage[xBreakpoint]) {
-            "Invalid XJavaLineBreakpoint passed to be updated or valid JavaLineBreakpoint wasn't properly recorded"
+            "Invalid XJavaLineBreakpoint passed to be changed or valid JavaLineBreakpoint wasn't properly recorded"
         }
 
         val fcbpBreakpoint = breakpoint.toFCBPBreakpoint()
-        registeredSessions.forEach { session -> session.update(fcbpBreakpoint) }
+        registeredSessions.forEach { session -> session.change(fcbpBreakpoint) }
     }
 
     fun addBreakpoint(xBreakpoint: XJavaLineBreakpoint) {
         if (null == xBreakpoint.conditionExpression) return
-        recordBreakpoint(xBreakpoint)
+        add(xBreakpoint)
     }
 
     fun removeBreakpoint(xBreakpoint: XJavaLineBreakpoint) {
         if (xBreakpoint !in storage) return
-        forgetBreakpoint(xBreakpoint)
+        remove(xBreakpoint)
     }
 
     fun changeBreakpoint(xBreakpoint: XJavaLineBreakpoint) {
         if (null != xBreakpoint.conditionExpression) {
-            if (xBreakpoint !in storage) recordBreakpoint(xBreakpoint)
-            else updateBreakpoint(xBreakpoint)
+            if (xBreakpoint !in storage) add(xBreakpoint)
+            else change(xBreakpoint)
         } else {
-            if (xBreakpoint in storage) forgetBreakpoint(xBreakpoint)
+            if (xBreakpoint in storage) remove(xBreakpoint)
         }
     }
 

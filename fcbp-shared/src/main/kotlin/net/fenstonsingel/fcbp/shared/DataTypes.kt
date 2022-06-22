@@ -2,8 +2,7 @@ package net.fenstonsingel.fcbp.shared
 
 import kotlinx.serialization.Serializable
 
-@Serializable
-@JvmInline
+@Serializable @JvmInline
 value class FCBPType(val name: String)
 
 @Serializable
@@ -15,11 +14,8 @@ data class FCBPSourcePosition(val lineNumber: Int, val lambdaOrdinal: Int? = nul
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-
         other as FCBPSourcePosition
-
         if (lineNumber != other.lineNumber) return false
-
         return true
     }
 
@@ -28,9 +24,8 @@ data class FCBPSourcePosition(val lineNumber: Int, val lambdaOrdinal: Int? = nul
     }
 }
 
-@Serializable
-@JvmInline
-value class FCBPCondition(val body: String)
+@Serializable @JvmInline
+value class FCBPCondition(val expression: String)
 
 @Serializable
 data class FCBPBreakpoint(
@@ -42,13 +37,10 @@ data class FCBPBreakpoint(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-
         other as FCBPBreakpoint
-
         if (klass != other.klass) return false
         if (method != other.method) return false
         if (position != other.position) return false
-
         return true
     }
 

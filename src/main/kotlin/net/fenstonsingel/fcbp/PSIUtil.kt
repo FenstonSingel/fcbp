@@ -11,6 +11,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassInitializer
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.PsiMember
@@ -19,6 +20,7 @@ import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.PsiClassReferenceType
+import com.intellij.psi.util.PsiUtil
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
 
@@ -41,12 +43,37 @@ val Breakpoint<*>.conditionPsi: JavaCodeFragment
  * that this element belongs to.
  *
  * @throws NoSuchElementException if element in question doesn't belong to any of the above.
- * */
+ */
 val PsiElement.enclosingBehavior: PsiMember
     get() = generateSequence(this) { psi -> psi.parent }
         .filterIsInstance<PsiMember>()
         .filter { psi -> psi is PsiMethod || psi is PsiClassInitializer }
         .first()
+
+/**
+ * A list of string representations for types of the method's parameters
+ * (including an implicit reference in case of inner class constructors).
+ */
+val Pair<PsiClass, PsiMember>.parameterTypesNames: List<String>
+    get() {
+        val (klass, method) = this
+        return when (method) {
+            is PsiMethod -> {
+                val parameters = method.parameterList.parameters.map { parameter -> parameter.type.binaryName }
+                if (method.isConstructor && PsiUtil.isInnerClass(klass)) {
+                    val outerClass = checkNotNull(klass.containingClass) { "Inner class doesn't have an outer class" }
+                    val outerClassName = checkNotNull(outerClass.binaryName) { "Inner class's outer class is nameless" }
+                    listOf(outerClassName) + parameters
+                } else {
+                    parameters
+                }
+            }
+            is PsiClassInitializer ->
+                emptyList()
+            else ->
+                throw IllegalStateException("Not a behavior was passed as a behavior")
+        }
+    }
 
 /**
  * PSI elements representing a class that this element belongs to
@@ -73,14 +100,18 @@ val PsiElement.enclosingClass: PsiClass
 val PsiMember.binaryName: String?
     get() = when (this) {
         is PsiClass ->
-            containingClass.let { outerClass -> if (null != outerClass) "${outerClass.binaryName}$$name" else qualifiedName }
+            containingClass.let { outerClass ->
+                if (null != outerClass) "${outerClass.binaryName}$$name" else qualifiedName
+            }
         is PsiMethod ->
             if (!isConstructor) name
             else allEnclosingClasses.reversed().map { klass -> klass.name }.joinToString(separator = "$")
-        is PsiClassInitializer -> "<clinit>"
-        // TODO process enum classes correctly
+        is PsiClassInitializer ->
+            "<clinit>"
+        // TODO check if enum classes are processed correctly
         // TODO process anonymous objects correctly
-        else -> null
+        else ->
+            null
     }
 
 /**
@@ -105,7 +136,7 @@ val PsiType.binaryName: String
  */
 fun PsiJavaCodeReferenceElement.addQualifier(qualifier: PsiJavaCodeReferenceElement) {
     val template = ReadAction.compute<PsiExpression, Nothing> {
-        val psiFactory = JavaPsiFacade.getElementFactory(project)
+        val psiFactory: PsiElementFactory = JavaPsiFacade.getElementFactory(project)
         psiFactory.createExpressionFromText("x.y", null)
     }
 
@@ -125,7 +156,7 @@ fun PsiJavaCodeReferenceElement.addQualifier(qualifier: PsiJavaCodeReferenceElem
  */
 fun PsiJavaCodeReferenceElement.addQualifier(qualifier: String) {
     val qualifierPsi = ReadAction.compute<PsiJavaCodeReferenceElement, Nothing> {
-        val psiFactory = JavaPsiFacade.getElementFactory(project)
+        val psiFactory: PsiElementFactory = JavaPsiFacade.getElementFactory(project)
         psiFactory.createExpressionFromText(qualifier, null) as PsiJavaCodeReferenceElement
     }
 

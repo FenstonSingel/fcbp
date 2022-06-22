@@ -1,10 +1,27 @@
 package net.fenstonsingel.fcbp.shared
 
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.io.IOException
 import java.net.Socket
 import java.nio.ByteBuffer
 import java.nio.channels.SocketChannel
+
+fun FCBPPacket.toByteBuffer(): ByteBuffer {
+    val dataBytes = Json.encodeToString(this).encodeToByteArray()
+    val packetBytesBuffer: ByteBuffer = ByteBuffer.allocate(4 + dataBytes.size)
+    packetBytesBuffer.apply {
+        putInt(dataBytes.size)
+        put(dataBytes)
+        flip()
+    }
+    return packetBytesBuffer
+}
+
+fun FCBPPacket.toByteArray(): ByteArray = toByteBuffer().let { packetBytesBuffer ->
+    ByteArray(packetBytesBuffer.capacity()).also { byteArray -> packetBytesBuffer.get(byteArray) }
+}
 
 fun SocketChannel.sendFCBPPacket(packet: FCBPPacket) { write(packet.toByteBuffer()) }
 
@@ -30,10 +47,13 @@ class FCBPPacketBuffer {
 
     fun read(channel: SocketChannel): FCBPPacket? {
         if (State.AT_SIZE == state) {
-            if (-1 == channel.read(sizeBuffer)) throw ClosedFCBPConnectionException
-            if (!sizeBuffer.hasRemaining()) {
-                val size = sizeBuffer.flip().int
-                advanceBufferState(size)
+            with(sizeBuffer) {
+                if (-1 == channel.read(this)) throw ClosedFCBPConnectionException
+                if (!hasRemaining()) {
+                    flip()
+                    val size = int
+                    advanceBufferState(size)
+                }
             }
         }
 
@@ -42,9 +62,10 @@ class FCBPPacketBuffer {
                 checkNotNull(this) { "No data ByteBuffer found despite FCBPPacketBuffer's AT_DATA state" }
                 if (-1 == channel.read(this)) throw ClosedFCBPConnectionException
                 if (!hasRemaining()) {
-                    val dataBytes = ByteArray(capacity()).apply { flip().get(this) }
+                    flip()
+                    val dataBytes = ByteArray(capacity()).also { byteArray -> get(byteArray) }
                     restartBuffer()
-                    return Json.decodeFromString<FCBPPacket>(dataBytes.decodeToString())
+                    return Json.decodeFromString(dataBytes.decodeToString())
                 }
             }
         }
@@ -52,7 +73,13 @@ class FCBPPacketBuffer {
         return null
     }
 
-    private enum class State { AT_SIZE, AT_DATA }
+    private companion object {
+
+        private enum class State { AT_SIZE, AT_DATA }
+
+        private object ClosedFCBPConnectionException : IOException()
+
+    }
 
 }
 
