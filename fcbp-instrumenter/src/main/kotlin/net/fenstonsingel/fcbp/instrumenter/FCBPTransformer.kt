@@ -12,12 +12,6 @@ import java.security.ProtectionDomain
 
 class FCBPTransformer(private val instrumenter: FCBPInstrumenter) : ClassFileTransformer {
 
-    private val innerLoadedClasses = mutableSetOf<String>()
-
-    // TODO research less memory-intensive ways to monitor loaded classes
-    val loadedClasses: Set<String>
-        get() = innerLoadedClasses
-
     private val classPool = ClassPool.getDefault()
 
     private val resultingBytecodeDebugFolder by lazy {
@@ -34,8 +28,6 @@ class FCBPTransformer(private val instrumenter: FCBPInstrumenter) : ClassFileTra
         protectionDomain: ProtectionDomain,
         classfileBuffer: ByteArray
     ): ByteArray? {
-        innerLoadedClasses += className
-
         val breakpoints = instrumenter.breakpointsByClassName[className] ?: return null
         val breakpointsByMethod = breakpoints.groupBy(FCBPBreakpoint::method)
 
@@ -63,7 +55,7 @@ class FCBPTransformer(private val instrumenter: FCBPInstrumenter) : ClassFileTra
         try {
             classReader.accept(fcbpClassVisitor, ClassReader.EXPAND_FRAMES)
         } catch (e: Exception) {
-            e.printStackTrace()
+            println(e)
             breakpoints.forEach { bp -> instrumenter.transmitConditionStatus(bp, FCBPConditionStatus.DELEGATED) }
             return null
         }

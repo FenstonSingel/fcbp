@@ -7,6 +7,10 @@ import net.fenstonsingel.fcbp.shared.FCBPType
 
 enum class FCBPConditionStatus { INSTRUMENTED, DELEGATED, FORGOTTEN }
 
+fun println(e: Exception) {
+    println("${e.javaClass.name}: ${e.message}\n${e.stackTrace.joinToString("\n")}")
+}
+
 fun CtBehavior.toFCBPMethod(): FCBPMethod = FCBPMethod(name, parameterTypes.map { type -> FCBPType(type.name) })
 
 val FCBPBreakpoint.shouldBeInstrumented: Boolean

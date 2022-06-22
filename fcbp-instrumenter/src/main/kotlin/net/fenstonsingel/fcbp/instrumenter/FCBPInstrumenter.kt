@@ -88,7 +88,7 @@ class FCBPInstrumenter private constructor(
 
         if (breakpoint.shouldBeInstrumented) {
             classBreakpoints += breakpoint
-            retransformClassIfLoaded(className)
+            breakpoint.retransformRelevantClassIfLoaded()
         } else {
             transmitConditionStatus(breakpoint, FCBPConditionStatus.DELEGATED)
         }
@@ -102,7 +102,7 @@ class FCBPInstrumenter private constructor(
 
         classBreakpoints -= breakpoint
         transmitConditionStatus(breakpoint, FCBPConditionStatus.FORGOTTEN)
-        retransformClassIfLoaded(className)
+        breakpoint.retransformRelevantClassIfLoaded()
     }
 
     private fun changeBreakpoint(breakpoint: FCBPBreakpoint) {
@@ -114,12 +114,16 @@ class FCBPInstrumenter private constructor(
         classBreakpoints -= breakpoint // remove instance with the old condition
         if (breakpoint.shouldBeInstrumented) classBreakpoints += breakpoint // re-add instance with a new condition
         else transmitConditionStatus(breakpoint, FCBPConditionStatus.DELEGATED)
-        retransformClassIfLoaded(className)
+        breakpoint.retransformRelevantClassIfLoaded()
     }
 
-    private fun retransformClassIfLoaded(className: String) {
-        if (className in transformer.loadedClasses) {
-            val klass = Class.forName(className.replace('/', '.'))
+    private fun FCBPBreakpoint.retransformRelevantClassIfLoaded() {
+        val klass = instrumentation.allLoadedClasses
+            .find<Class<*>> { candidate -> klass.name == candidate.typeName }
+            ?: return
+        if (!instrumentation.isModifiableClass(klass)) {
+            transmitConditionStatus(this, FCBPConditionStatus.DELEGATED)
+        } else {
             instrumentation.retransformClasses(klass)
         }
     }
@@ -128,7 +132,7 @@ class FCBPInstrumenter private constructor(
         try {
             doAction()
         } catch (e: Exception) {
-            e.printStackTrace()
+            println(e)
             instrumentation.removeTransformer(transformer)
         }
     }

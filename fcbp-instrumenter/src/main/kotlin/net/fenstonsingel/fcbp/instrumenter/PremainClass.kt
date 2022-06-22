@@ -14,7 +14,7 @@ object PremainClass {
             val instrumenterID = checkNotNull(arguments?.toIntOrNull()) { "FCBP instrumenter ID wasn't provided" }
             FCBPInstrumenter.launch(instrumenterID, instrumentation)
         } catch (e: Exception) {
-            e.printStackTrace()
+            println(e)
         }
     }
 
