@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.JavaCodeFragment
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassInitializer
 import com.intellij.psi.PsiElement
@@ -122,6 +123,8 @@ val PsiType.binaryName: String
     get() = when (this) {
         is PsiPrimitiveType ->
             name
+        is PsiArrayType ->
+            "${componentType.binaryName}[]"
         is PsiClassReferenceType ->
             when (val klass = checkNotNull(resolve()) { "Method parameter's type resolution failed" }) {
                 is PsiTypeParameter -> klass.extendsListTypes.firstOrNull()?.binaryName ?: "java.lang.Object"
