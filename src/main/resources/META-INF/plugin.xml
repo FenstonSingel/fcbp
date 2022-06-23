@@ -1,19 +1,25 @@
 <idea-plugin>
-    <id>org.jetbrains.plugins.template</id>
-    <name>Template</name>
-    <vendor>JetBrains</vendor>
+    <id>net.fenstonsingel.fcbp</id>
+    <name>FCBP</name>
+    <vendor>fenstonsingel</vendor>
 
     <!-- Product and plugin compatibility requirements -->
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="org.jetbrains.plugins.template.services.MyApplicationService"/>
-        <projectService serviceImplementation="org.jetbrains.plugins.template.services.MyProjectService"/>
+        <postStartupActivity implementation="net.fenstonsingel.fcbp.core.FCBPStartupActivity"/>
+        <applicationService serviceImplementation="net.fenstonsingel.fcbp.core.FCBPServer"/>
+        <projectService serviceImplementation="net.fenstonsingel.fcbp.core.FCBPBreakpointManager"/>
     </extensions>
 
-    <applicationListeners>
-        <listener class="org.jetbrains.plugins.template.listeners.MyProjectManagerListener"
-                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
-    </applicationListeners>
+    <projectListeners>
+        <listener class="net.fenstonsingel.fcbp.listeners.FCBPDebuggerManagerListener"
+                  topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
+        <listener class="net.fenstonsingel.fcbp.listeners.FCBPExecutionListener"
+                  topic="com.intellij.execution.ExecutionListener"/>
+        <listener class="net.fenstonsingel.fcbp.listeners.FCBPXBreakpointListener"
+                  topic="com.intellij.xdebugger.breakpoints.XBreakpointListener"/>
+    </projectListeners>
 </idea-plugin>
