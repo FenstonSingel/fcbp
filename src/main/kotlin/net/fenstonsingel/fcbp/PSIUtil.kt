@@ -140,7 +140,11 @@ val PsiType.binaryName: String
 fun PsiJavaCodeReferenceElement.addQualifier(qualifier: PsiJavaCodeReferenceElement) {
     val template = ReadAction.compute<PsiExpression, Nothing> {
         val psiFactory: PsiElementFactory = JavaPsiFacade.getElementFactory(project)
-        psiFactory.createExpressionFromText("x.y", null)
+        psiFactory.createExpressionFromText("x.y", context)
+    }
+    val copy = ReadAction.compute<PsiExpression, Nothing> {
+        val psiFactory: PsiElementFactory = JavaPsiFacade.getElementFactory(project)
+        psiFactory.createExpressionFromText(text, context)
     }
 
     /*
@@ -149,7 +153,7 @@ fun PsiJavaCodeReferenceElement.addQualifier(qualifier: PsiJavaCodeReferenceElem
      */
     WriteCommandAction.runWriteCommandAction(project) {
         template.firstChild.replace(qualifier)
-        template.lastChild.replace(this)
+        template.lastChild.replace(copy)
         replace(template)
     }
 }
@@ -160,7 +164,7 @@ fun PsiJavaCodeReferenceElement.addQualifier(qualifier: PsiJavaCodeReferenceElem
 fun PsiJavaCodeReferenceElement.addQualifier(qualifier: String) {
     val qualifierPsi = ReadAction.compute<PsiJavaCodeReferenceElement, Nothing> {
         val psiFactory: PsiElementFactory = JavaPsiFacade.getElementFactory(project)
-        psiFactory.createExpressionFromText(qualifier, null) as PsiJavaCodeReferenceElement
+        psiFactory.createExpressionFromText(qualifier, context) as PsiJavaCodeReferenceElement
     }
 
     addQualifier(qualifierPsi)
